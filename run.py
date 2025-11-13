@@ -1,4 +1,4 @@
-# from run_pipeline.generate_images import generate_images
+from run_pipeline.generate_images import generate_images
 # from run_pipeline.generate_script import generate_Script_Gemini
 from run_pipeline.generate_audios import generate_audios
 # from scripts.tts_env import activate_ttsenv, deactivate_ttsenv
@@ -18,10 +18,10 @@ filepath_to_script = "outputs/1/script.json"
 
 
 # 2 generate_audios(filepath_to_script)
-generate_audios(filepath_to_script)
+# generate_audios(filepath_to_script)
 
 #3 generate_images from the script prompts
-# generate_images(filepath_to_script)
+generate_images(filepath_to_script)
 
 # deactivate_ttsenv(env_process)
 

@@ -24,9 +24,6 @@ def generate_image_from_prompt(prompt: str, output_path: str, text: str):
     print(f"\nGenerating image for prompt: {prompt[:60]}...")
     t0 = time.time()
 
-    torch.set_num_threads(2)
-    torch.set_num_interop_threads(2)
-
     # ============================================================
     # Kandinsky model
     # ============================================================
@@ -45,8 +42,8 @@ def generate_image_from_prompt(prompt: str, output_path: str, text: str):
         image_embeds=image_embeds,
         negative_image_embeds=negative_image_embeds,
         num_inference_steps=10,
-        height=720,
-        width=1280
+        height = 360,
+        width = 640
     ).images[0]
 
 

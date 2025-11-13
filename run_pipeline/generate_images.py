@@ -47,7 +47,7 @@ def generate_images(filepath: str) -> list:
 
     generated = []
 
-    for scene in scenes:
+    for scene in scenes[0:3]:
         scene_id = scene.get("id", "unknown")
         prompt = scene.get("prompt", "").strip()
         text = scene.get("text", "").strip()
