@@ -4,6 +4,7 @@ ttsenv/
 venv/
 env/
 .env
+
 # Python cache files
 __pycache__/
 *.pyc
@@ -26,5 +27,6 @@ outputs/**/images/**
 models/
 checkpoints/
 
-
-outputs/
+# Ignore EVERYTHING inside outputs EXCEPT script.json
+outputs/**
+!outputs/**/script.json
