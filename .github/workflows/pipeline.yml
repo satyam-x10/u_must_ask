@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - prod
+      - main
 
 jobs:
   generate-images:
@@ -47,5 +47,5 @@ jobs:
       - name: Upload output images & files
         uses: actions/upload-artifact@v4
         with:
-          name: generated-images
+          name: generated-files
           path: outputs/1/**

@@ -1,7 +1,8 @@
 import os
 import json
 import time
-from scripts.vits import generate_tts_audio
+# from scripts.vits import generate_tts_audio
+from scripts.bark import generate_tts_audio
 
 def generate_audios(filepath: str) -> list:
     # Example: "outputs/1/script.json"

@@ -5,6 +5,14 @@ from PIL import Image, ImageDraw, ImageFont
 import torch
 from diffusers import KandinskyPriorPipeline, KandinskyPipeline
 
+prior = KandinskyPriorPipeline.from_pretrained(
+        "kandinsky-community/kandinsky-2-1-prior",
+        torch_dtype=torch.float32
+)
+pipe = KandinskyPipeline.from_pretrained(
+        "kandinsky-community/kandinsky-2-1",
+        torch_dtype=torch.float32
+)
 
 def generate_image_from_prompt(prompt: str, output_path: str, text: str):
     if not prompt or not prompt.strip():
@@ -16,17 +24,13 @@ def generate_image_from_prompt(prompt: str, output_path: str, text: str):
     print(f"\nGenerating image for prompt: {prompt[:60]}...")
     t0 = time.time()
 
+    torch.set_num_threads(2)
+    torch.set_num_interop_threads(2)
+
     # ============================================================
     # Kandinsky model
     # ============================================================
-    prior = KandinskyPriorPipeline.from_pretrained(
-        "kandinsky-community/kandinsky-2-1-prior",
-        torch_dtype=torch.float32
-    )
-    pipe = KandinskyPipeline.from_pretrained(
-        "kandinsky-community/kandinsky-2-1",
-        torch_dtype=torch.float32
-    )
+    
 
     prior.to("cpu")
     pipe.to("cpu")
