@@ -1,10 +1,10 @@
 name: Image Generation Pipeline
 
 on:
-  workflow_dispatch: # run manually
-  push:
-    branches:
-      - main
+  # workflow_dispatch:
+  # push:
+  #   branches:
+  #     - main
 
 jobs:
   generate-images:

@@ -3,7 +3,7 @@ import time
 from PIL import Image, ImageDraw, ImageFont
 
 import torch
-from diffusers import StableDiffusionPipeline
+from diffusers import KandinskyPriorPipeline, KandinskyPipeline
 
 
 def generate_image_from_prompt(prompt: str, output_path: str, text: str):
@@ -17,46 +17,8 @@ def generate_image_from_prompt(prompt: str, output_path: str, text: str):
     t0 = time.time()
 
     # ============================================================
-    # Smaller model: SDXL-Turbo (fits easily on GitHub Actions)
+    # Kandinsky model
     # ============================================================
-    pipe = StableDiffusionPipeline.from_pretrained(
-    "stabilityai/sd-turbo",
-    torch_dtype=torch.float32
-    ).to("cpu")
-
-    full_prompt = "A kurzegast style image of " + prompt
-
-    image = pipe(
-        prompt=full_prompt,
-        # height=512,
-        # width=512,
-        height=720,
-        width=1280,
-        num_inference_steps=20,
-        guidance_scale=0.0
-    ).images[0]
-
-    # Optional: draw text overlay
-    draw = ImageDraw.Draw(image)
-    try:
-        font = ImageFont.truetype("arial.ttf", size=24)
-    except:
-        font = ImageFont.load_default()
-
-    draw.text((10, 10), text, fill=(255, 255, 255), font=font)
-
-    image.save(output_path)
-
-    print(f"Image saved: {output_path} (in {round(time.time() - t0, 1)}s)")
-    return output_path
-
-
-    # ============================================================
-    # Original Kandinsky code (disabled because too large for CI)
-    # ============================================================
-    """
-    from diffusers import KandinskyPriorPipeline, KandinskyPipeline
-
     prior = KandinskyPriorPipeline.from_pretrained(
         "kandinsky-community/kandinsky-2-1-prior",
         torch_dtype=torch.float32
@@ -69,6 +31,7 @@ def generate_image_from_prompt(prompt: str, output_path: str, text: str):
     prior.to("cpu")
     pipe.to("cpu")
 
+    # This re-uses the 'prompt' variable from the function input
     prompt = "A kurzegast style image of " + prompt
 
     image_embeds, negative_image_embeds = prior(prompt).to_tuple()
@@ -82,5 +45,18 @@ def generate_image_from_prompt(prompt: str, output_path: str, text: str):
         width=1280
     ).images[0]
 
+
+    # Optional: draw text overlay
+    draw = ImageDraw.Draw(image)
+    try:
+        # Ensure you have 'arial.ttf' or specify a different font
+        font = ImageFont.truetype("arial.ttf", size=24)
+    except:
+        font = ImageFont.load_default()
+
+    draw.text((10, 10), text, fill=(255, 255, 255), font=font)
+
     image.save(output_path)
-    """
+
+    print(f"Image saved: {output_path} (in {round(time.time() - t0, 1)}s)")
+    return output_path
