@@ -1,3 +1,4 @@
+import os
 from run_pipeline.generate_images import generate_images
 
 

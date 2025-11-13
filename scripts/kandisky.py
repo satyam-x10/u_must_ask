@@ -20,7 +20,7 @@ def generate_image_from_prompt(prompt: str, output_path: str, text: str):
     # Smaller model: SDXL-Turbo (fits easily on GitHub Actions)
     # ============================================================
     pipe = StableDiffusionPipeline.from_pretrained(
-    "segmind/tiny-sd",
+    "stabilityai/sd-turbo",
     torch_dtype=torch.float32
     ).to("cpu")
 
@@ -28,9 +28,11 @@ def generate_image_from_prompt(prompt: str, output_path: str, text: str):
 
     image = pipe(
         prompt=full_prompt,
+        # height=512,
+        # width=512,
         height=720,
         width=1280,
-        num_inference_steps=50,
+        num_inference_steps=20,
         guidance_scale=0.0
     ).images[0]
 
