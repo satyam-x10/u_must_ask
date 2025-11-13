@@ -3,6 +3,8 @@ import json
 import time
 from scripts.kandisky import generate_image_from_prompt
 
+
+
 def generate_images(filepath: str) -> list:
 
     if not os.path.exists(filepath):
@@ -47,10 +49,9 @@ def generate_images(filepath: str) -> list:
 
     generated = []
 
-    for scene in scenes[0:3]:
+    for scene in scenes:
         scene_id = scene.get("id", "unknown")
         prompt = scene.get("prompt", "").strip()
-        text = scene.get("text", "").strip()
 
         if not prompt:
             print(f"⚠️ Scene {scene_id} has no prompt, skipping.")
@@ -60,7 +61,7 @@ def generate_images(filepath: str) -> list:
         output_path = os.path.join(image_dir, filename)
 
         try:
-            path = generate_image_from_prompt(prompt, output_path, text)
+            path = generate_image_from_prompt(prompt, output_path)
             generated.append(path)
         except Exception as e:
             print(f"⚠️ Error generating scene {scene_id}: {e}")

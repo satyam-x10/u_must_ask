@@ -14,7 +14,7 @@ pipe = KandinskyPipeline.from_pretrained(
         torch_dtype=torch.float32
 )
 
-def generate_image_from_prompt(prompt: str, output_path: str, text: str):
+def generate_image_from_prompt(prompt: str, output_path: str):
     if not prompt or not prompt.strip():
         raise ValueError("Prompt cannot be empty.")
 
@@ -47,15 +47,6 @@ def generate_image_from_prompt(prompt: str, output_path: str, text: str):
     ).images[0]
 
 
-    # Optional: draw text overlay
-    draw = ImageDraw.Draw(image)
-    try:
-        # Ensure you have 'arial.ttf' or specify a different font
-        font = ImageFont.truetype("arial.ttf", size=24)
-    except:
-        font = ImageFont.load_default()
-
-    draw.text((10, 10), text, fill=(255, 255, 255), font=font)
 
     image.save(output_path)
 
