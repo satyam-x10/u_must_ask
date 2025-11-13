@@ -1,14 +1,10 @@
-diffusers==0.27.2
-transformers
-accelerate
-safetensors
-torch
+diffusers==0.35.2
+transformers==4.57.1
+accelerate==1.11.0
+safetensors==0.6.2
+torch==2.9.0
 
-Pillow
-numpy
-
-# optional but common for diffusers
-scipy
-
-# If you ever use tqdm (recommended)
-tqdm
+Pillow==11.3.0
+numpy==1.22.0
+scipy==1.11.4
+tqdm==4.67.1
