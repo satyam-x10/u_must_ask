@@ -1,0 +1,30 @@
+# Ignore Python virtual environments
+ttsenv/
+.venv/
+venv/
+env/
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE configs
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build / temporary / output folders
+outputs/**/images/**
+*.log
+
+# Optional: ignore large model directories
+models/
+checkpoints/
+
+
+outputs/

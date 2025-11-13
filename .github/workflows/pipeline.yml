@@ -1,0 +1,51 @@
+name: Image Generation Pipeline
+
+on:
+  workflow_dispatch: # run manually
+  push:
+    branches:
+      - main
+
+jobs:
+  generate-images:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      # Cache virtual environment so dependencies are not reinstalled every run
+      - name: Cache virtual environment
+        id: cache-venv
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+
+      - name: Create virtual environment (if not cached)
+        if: steps.cache-venv.outputs.cache-hit != 'true'
+        run: |
+          python -m venv .venv
+
+      - name: Install dependencies
+        run: |
+          source .venv/bin/activate
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run image generation pipeline
+        run: |
+          source .venv/bin/activate
+          python image_workflow.py
+
+      # Upload generated files for download
+      - name: Upload output images & files
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-images
+          path: outputs/**

@@ -1,0 +1,13 @@
+pip install opencv-python
+pip install pillow
+pip install transformers torch torchvision pillow tqdm accelerate
+pip install diffusers transformers accelerate torch
+
+
+
+pip install TTS
+pip install bark-small
+pip install bark
+pip install scipy
+
+py -3.10 -m venv bark_env

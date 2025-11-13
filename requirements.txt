@@ -1,0 +1,14 @@
+diffusers==0.27.2
+transformers
+accelerate
+safetensors
+torch
+
+Pillow
+numpy
+
+# optional but common for diffusers
+scipy
+
+# If you ever use tqdm (recommended)
+tqdm
