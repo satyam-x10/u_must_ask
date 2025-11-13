@@ -28,5 +28,8 @@ models/
 checkpoints/
 
 # Ignore EVERYTHING inside outputs EXCEPT script.json
-outputs/**
-!outputs/**/script.json
+outputs/**/images
+outputs/**/audios
+outputs/**/clips
+outputs/**/final_video.mp4
+
