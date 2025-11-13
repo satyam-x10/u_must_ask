@@ -32,7 +32,7 @@ def generate_image_from_prompt(prompt: str, output_path: str, text: str):
     pipe.to("cpu")
 
     # This re-uses the 'prompt' variable from the function input
-    prompt = "A kurzegast style image of " + prompt
+    prompt = "A cartoon style image of " + prompt
 
     image_embeds, negative_image_embeds = prior(prompt).to_tuple()
 
@@ -40,7 +40,7 @@ def generate_image_from_prompt(prompt: str, output_path: str, text: str):
         prompt=prompt,
         image_embeds=image_embeds,
         negative_image_embeds=negative_image_embeds,
-        num_inference_steps=20,
+        num_inference_steps=10,
         height=720,
         width=1280
     ).images[0]

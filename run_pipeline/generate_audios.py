@@ -29,6 +29,7 @@ def generate_audios(filepath: str) -> list:
     for scene in scenes:
         scene_id = scene.get("id", "unknown")
         text = scene.get("text", "").strip()
+        emotion = scene.get("emotion", "excited")
 
         if not text:
             print(f"⚠️ Scene {scene_id} has no text, skipping.")
@@ -38,7 +39,7 @@ def generate_audios(filepath: str) -> list:
         output_path = os.path.join(audio_dir, filename)
 
         try:
-            path = generate_tts_audio(text, output_path)
+            path = generate_tts_audio(text, output_path, emotion)
             generated.append(path)
         except Exception as e:
             print(f"⚠️ Error generating scene {scene_id}: {e}")

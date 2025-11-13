@@ -21,16 +21,16 @@ filepath_to_script = generate_Script_Gemini(TITLE_NAME,TITLE_ID)
 
 
 #2 generate_audios(filepath_to_script)
-generate_audios(filepath_to_script)
+# generate_audios(filepath_to_script)
 
 #3 generate_images from the script prompts
-generate_images(filepath_to_script)
+# generate_images(filepath_to_script)
 
 # deactivate_ttsenv(env_process)
 
 #merge image and audio to multiple video
-generate_all_clips(filepath_to_script)
+# generate_all_clips(filepath_to_script)
 
 
 # merge all clips to a single video
-final_path = generate_final_video(filepath_to_script)
+# final_path = generate_final_video(filepath_to_script)
