@@ -60,12 +60,13 @@ def generate_tts_audio(text: str, output_path: str, emotion: str = "calm") -> st
 
     try:
         tts.tts_to_file(
-    text=text,
-    file_path=output_path,
-    speed=preset["speed"],
-    temperature=preset["temperature"],
-    glow_tts_alpha=preset["glow_tts_alpha"],
-)
+        text=text,
+        file_path=output_path,
+        speed=preset["speed"],
+        temperature=preset["temperature"],
+        glow_tts_alpha=preset["glow_tts_alpha"],
+        speaker=DEFAULT_SPEAKER
+        )
 
 
         AudioSegment.from_wav(output_path)  # Validate WAV

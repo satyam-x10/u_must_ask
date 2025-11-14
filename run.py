@@ -2,36 +2,76 @@
 from run_pipeline.generate_script import generate_Script_Gemini
 from run_pipeline.generate_audios import generate_audios
 # from scripts.tts_env import activate_ttsenv, deactivate_ttsenv
-from run_pipeline.generate_all_clips import generate_all_clips
-from run_pipeline.generate_final_video import generate_final_video
+# from run_pipeline.generate_all_clips import generate_all_clips
+# from run_pipeline.generate_final_video import generate_final_video
 
-# === User Inputs ===
-TITLE_NAME = "The One Human Ability Scientists Can’t Explain Yet!"
-TITLE_ID = "1"
+import json
+import os
 
+# =====================================================
+# USER INPUT: Process titles from START → END
+# =====================================================
 
-# === generate the script with text and image prompt ===
-filepath_to_script = generate_Script_Gemini(TITLE_NAME,TITLE_ID)
-# filepath_to_script ---> outputs\1\script.json
+START_ID = 4  
+END_ID = 10     
 
-# filepath_to_script = "outputs/2/script.json"
+# Load the titles file
+with open("static/history/titles.json", "r", encoding="utf-8") as f:
+    TITLE_DATA = json.load(f)
 
-# print(f"Script generated at: {filepath_to_script}")
-# activate ttsenv
-# env_process = activate_ttsenv()
-
-
-# 2 generate_audios(filepath_to_script)
-# generate_audios(filepath_to_script)
-
-#3 generate_images from the script prompts
-# generate_images(filepath_to_script)
-
-# deactivate_ttsenv(env_process)
-
-#merge image and audio to multiple video
-generate_all_clips(filepath_to_script)
+def get_title_data(title_id: str):
+    """Return (title, prompt) for given title_id"""
+    for item in TITLE_DATA:
+        if item["id"] == title_id:
+            return item["title"], item.get("prompt")
+    return None, None
 
 
-# merge all clips to a single video
-final_path = generate_final_video(filepath_to_script)
+# =====================================================
+# MAIN LOOP – PROCESS ALL TITLES
+# =====================================================
+
+for tid in range(START_ID, END_ID + 1):
+
+    TITLE_ID = str(tid)
+    TITLE_NAME, TITLE_PROMPT = get_title_data(TITLE_ID)
+
+    if not TITLE_NAME:
+        print(f"❌ Title ID {TITLE_ID} not found. Skipping.")
+        continue
+
+    print("\n====================================")
+    print(f"▶ Processing Title ID: {TITLE_ID}")
+    print("TITLE_NAME:", TITLE_NAME)
+    print("TITLE_PROMPT:", TITLE_PROMPT)
+    print("====================================\n")
+
+    # -------------------------------------
+    # 1) Generate script
+    # -------------------------------------
+    script_path = generate_Script_Gemini(TITLE_NAME, TITLE_ID)
+
+    # Overwrite to ensure correct path format
+    script_path = f"outputs/scripts/script_{TITLE_ID}.json"
+
+    # -------------------------------------
+    # 2) Generate audios
+    # -------------------------------------
+    generate_audios(script_path)
+
+    # -------------------------------------
+    # 3) Generate images (optional)
+    # -------------------------------------
+    # generate_images(script_path)
+
+    # -------------------------------------
+    # 4) Merge image + audio into clips (optional)
+    # -------------------------------------
+    # generate_all_clips(script_path)
+
+    # -------------------------------------
+    # 5) Merge all clips into one final video (optional)
+    # -------------------------------------
+    # final_video_path = generate_final_video(script_path)
+
+print("\n✅ ALL TITLES PROCESSED SUCCESSFULLY!")
