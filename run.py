@@ -2,7 +2,7 @@
 # from run_pipeline.generate_script import generate_Script_Gemini
 # from run_pipeline.generate_audios import generate_audios
 # from scripts.tts_env import activate_ttsenv, deactivate_ttsenv
-# from run_pipeline.generate_all_clips import generate_all_clips
+from run_pipeline.generate_all_clips import generate_all_clips
 from run_pipeline.generate_final_video import generate_final_video
 
 import json
@@ -12,8 +12,8 @@ import os
 # USER INPUT: Process titles from START → END
 # =====================================================
 
-START_ID = 11  
-END_ID = 11     
+START_ID = 1 
+END_ID = 1    
 
 # Load the titles file
 with open("static/titles.json", "r", encoding="utf-8") as f:
@@ -67,7 +67,7 @@ for tid in range(START_ID, END_ID + 1):
     # -------------------------------------
     # 4) Merge image + audio into clips (optional)
     # -------------------------------------
-    # generate_all_clips(script_path)
+    generate_all_clips(script_path)
 
     # -------------------------------------
     # 5) Merge all clips into one final video (optional)
