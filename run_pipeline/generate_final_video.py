@@ -1,36 +1,51 @@
 import os
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 
-
-def generate_final_video(base_dir: str):
+def generate_final_video(filepath_to_script: str):
     """
-    Merges all clips inside <base_dir>/clips into a single final video.
-    Output is saved as <base_dir>/final_video.mp4
+    Example:
+        filepath_to_script = "outputs/scripts/script_11.json"
+
+    Loads clips from:
+        outputs/clips/11/
+
+    Saves final video to:
+        outputs/videos/11.mp4
     """
 
-    # Handle if user passed script.json path instead of folder
-    if base_dir.endswith("script.json"):
-        base_dir = os.path.dirname(base_dir)
+    # Extract ID from filename
+    filename = os.path.basename(filepath_to_script)          # script_11.json
+    script_id = filename.replace("script_", "").replace(".json", "")  # 11
 
-    clips_dir = os.path.join(base_dir, "clips")
-    output_path = os.path.join(base_dir, "final_video.mp4")
+    BASE = "outputs"
 
-    # Get all scene clips (sorted by scene number)
-    video_files = sorted(
-        [os.path.join(clips_dir, f) for f in os.listdir(clips_dir) if f.endswith((".mp4", ".mkv"))]
-    )
+    clips_dir = os.path.join(BASE, "clips", script_id)
+    videos_dir = os.path.join(BASE, "videos")
+    os.makedirs(videos_dir, exist_ok=True)
+
+    # New desired output path (no folder)
+    output_path = os.path.join(videos_dir, f"{script_id}.mp4")
+
+    # Collect clip files
+    if not os.path.exists(clips_dir):
+        print(f"No clips directory found: {clips_dir}")
+        return None
+
+    video_files = sorted([
+        os.path.join(clips_dir, f)
+        for f in os.listdir(clips_dir)
+        if f.endswith((".mp4", ".mkv"))
+    ])
 
     if not video_files:
-        print(f"⚠️ No video clips found in {clips_dir}")
-        return
+        print(f"No video files found in: {clips_dir}")
+        return None
 
-    print(f"🎬 Found {len(video_files)} clips. Merging...")
+    print(f"Merging {len(video_files)} clips...")
 
-    # Load and concatenate all clips
     clips = [VideoFileClip(vf) for vf in video_files]
     final_video = concatenate_videoclips(clips, method="compose")
 
-    # Write output file
     final_video.write_videofile(output_path, codec="libx264", audio_codec="aac", fps=24)
 
     # Cleanup
@@ -38,5 +53,5 @@ def generate_final_video(base_dir: str):
         clip.close()
     final_video.close()
 
-    print(f"✅ Final video saved at: {output_path}")
+    print(f"Final video saved at: {output_path}")
     return output_path

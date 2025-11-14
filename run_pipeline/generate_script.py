@@ -28,7 +28,6 @@ def extract_first_json_block(text: str) -> str:
                 return text[start:i + 1]
     return None
 
-
 def generate_Script_Gemini(TITLE_NAME, TITLE_ID):
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -39,62 +38,53 @@ def generate_Script_Gemini(TITLE_NAME, TITLE_ID):
 
     for attempt in range(1, MAX_RETRIES + 1):
 
-        print(f"\n🔄 Attempt {attempt}/{MAX_RETRIES} for ID {TITLE_ID}")
+        print(f"\nAttempt {attempt}/{MAX_RETRIES} for ID {TITLE_ID}")
 
         raw_output = generate_script(prompt)
 
-        # Remove markdown code fences
         cleaned = re.sub(r"```(?:json)?|```", "", raw_output).strip()
 
-        # Extract potential JSON
         block = extract_first_json_block(cleaned)
         if not block:
-            print("❌ No JSON block. Retrying...")
+            print("No JSON block. Retrying...")
             continue
 
-        # Try normal json first
         try:
             script_data = json.loads(block)
         except:
-            # Try repairing JSON
             try:
                 repaired = repair_json(block)
                 script_data = json.loads(repaired)
-                print("🔧 JSON repaired successfully.")
+                print("JSON repaired successfully.")
             except:
-                print("❌ JSON unrecoverable. Retrying...")
+                print("JSON unrecoverable. Retrying...")
                 continue
 
-        # Validate structure
         if "scenes" not in script_data:
-            print("❌ 'scenes' missing. Retrying...")
+            print("'scenes' missing. Retrying...")
             continue
 
         if not isinstance(script_data["scenes"], list) or len(script_data["scenes"]) < 10:
-            print("❌ Invalid scenes array. Retrying...")
+            print("Invalid scenes array. Retrying...")
             continue
 
-        # SUCCESS
-        print("✅ Valid script generated.")
+        print("Valid script generated.")
         break
 
-    # ---------------------------------------
-    # Final fallback if totally invalid
-    # ---------------------------------------
     if script_data is None:
         script_data = {
             "error": "Failed to generate valid script after retries.",
             "raw_output": raw_output
         }
 
-    # Save output
-    title_folder = os.path.join(OUTPUT_DIR, str(TITLE_ID))
-    os.makedirs(title_folder, exist_ok=True)
+    # Save in new location: outputs/scripts/script_<id>.json
+    scripts_dir = os.path.join(OUTPUT_DIR, "scripts")
+    os.makedirs(scripts_dir, exist_ok=True)
 
-    filepath = os.path.join(title_folder, "script.json")
+    filepath = os.path.join(scripts_dir, f"script_{TITLE_ID}.json")
 
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(script_data, f, indent=2, ensure_ascii=False)
 
-    print(f"📄 Script saved at: {filepath}")
+    print(f"Script saved at: {filepath}")
     return filepath

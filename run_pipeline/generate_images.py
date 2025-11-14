@@ -4,7 +4,6 @@ import time
 from scripts.kandisky import generate_image_from_prompt
 
 
-
 def generate_images(filepath: str) -> list:
 
     if not os.path.exists(filepath):
@@ -21,15 +20,15 @@ def generate_images(filepath: str) -> list:
     except Exception:
         is_valid_json = False
 
-    # If not valid JSON, save raw content to a .txt file and exit
+    # If invalid JSON, save raw text
     if not is_valid_json:
         txt_path = filepath + ".txt"
 
         with open(txt_path, "w", encoding="utf-8") as txt:
             txt.write(raw_content)
 
-        print("\n❌ Invalid JSON detected.")
-        print(f"📄 Raw content saved as text file: {txt_path}\n")
+        print("\nInvalid JSON detected.")
+        print(f"Raw content saved as text file: {txt_path}\n")
 
         return [txt_path]
 
@@ -40,12 +39,15 @@ def generate_images(filepath: str) -> list:
     title = data.get("title", "Untitled Project")
     scenes = data["scenes"]
 
-    # Create output folder
-    base_dir = os.path.dirname(filepath)
-    image_dir = os.path.join(base_dir, "images")
+    # Extract script ID from filename
+    filename = os.path.basename(filepath)                 # script_1.json
+    script_id = filename.replace("script_", "").replace(".json", "")
+
+    # NEW OUTPUT DIRECTORY
+    image_dir = os.path.join("outputs", "images", script_id)
     os.makedirs(image_dir, exist_ok=True)
 
-    print(f"\n🖼️ Generating images for project: {title} ({len(scenes)} scenes)\n")
+    print(f"\nGenerating images for project: {title} ({len(scenes)} scenes)\n")
 
     generated = []
 
@@ -54,7 +56,7 @@ def generate_images(filepath: str) -> list:
         prompt = scene.get("prompt", "").strip()
 
         if not prompt:
-            print(f"⚠️ Scene {scene_id} has no prompt, skipping.")
+            print(f"Scene {scene_id} has no prompt, skipping.")
             continue
 
         filename = f"scene_{scene_id}.png"
@@ -64,9 +66,9 @@ def generate_images(filepath: str) -> list:
             path = generate_image_from_prompt(prompt, output_path)
             generated.append(path)
         except Exception as e:
-            print(f"⚠️ Error generating scene {scene_id}: {e}")
+            print(f"Error generating scene {scene_id}: {e}")
 
         time.sleep(0.2)
 
-    print(f"\n✅ Finished. {len(generated)} images saved in {image_dir}")
+    print(f"\nFinished. {len(generated)} images saved in {image_dir}")
     return generated

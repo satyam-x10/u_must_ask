@@ -1,9 +1,9 @@
 # from run_pipeline.generate_images import generate_images
-from run_pipeline.generate_script import generate_Script_Gemini
-from run_pipeline.generate_audios import generate_audios
+# from run_pipeline.generate_script import generate_Script_Gemini
+# from run_pipeline.generate_audios import generate_audios
 # from scripts.tts_env import activate_ttsenv, deactivate_ttsenv
 # from run_pipeline.generate_all_clips import generate_all_clips
-# from run_pipeline.generate_final_video import generate_final_video
+from run_pipeline.generate_final_video import generate_final_video
 
 import json
 import os
@@ -12,11 +12,11 @@ import os
 # USER INPUT: Process titles from START → END
 # =====================================================
 
-START_ID = 4  
-END_ID = 10     
+START_ID = 11  
+END_ID = 11     
 
 # Load the titles file
-with open("static/history/titles.json", "r", encoding="utf-8") as f:
+with open("static/titles.json", "r", encoding="utf-8") as f:
     TITLE_DATA = json.load(f)
 
 def get_title_data(title_id: str):
@@ -49,7 +49,7 @@ for tid in range(START_ID, END_ID + 1):
     # -------------------------------------
     # 1) Generate script
     # -------------------------------------
-    script_path = generate_Script_Gemini(TITLE_NAME, TITLE_ID)
+    # generate_Script_Gemini(TITLE_NAME, TITLE_ID)
 
     # Overwrite to ensure correct path format
     script_path = f"outputs/scripts/script_{TITLE_ID}.json"
@@ -57,7 +57,7 @@ for tid in range(START_ID, END_ID + 1):
     # -------------------------------------
     # 2) Generate audios
     # -------------------------------------
-    generate_audios(script_path)
+    # generate_audios(script_path)
 
     # -------------------------------------
     # 3) Generate images (optional)
@@ -72,6 +72,6 @@ for tid in range(START_ID, END_ID + 1):
     # -------------------------------------
     # 5) Merge all clips into one final video (optional)
     # -------------------------------------
-    # final_video_path = generate_final_video(script_path)
+    final_video_path = generate_final_video(script_path)
 
 print("\n✅ ALL TITLES PROCESSED SUCCESSFULLY!")
