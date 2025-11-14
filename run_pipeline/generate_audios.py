@@ -5,13 +5,7 @@ from scripts.vits import generate_tts_audio
 # from scripts.bark import generate_tts_audio
 
 def generate_audios(filepath: str) -> list:
-    """
-    Example filepath:
-        outputs/scripts/script_1.json
-    Saves audio to:
-        output/audios/1/scene_x.wav
-    """
-
+    
     if not os.path.exists(filepath):
         raise FileNotFoundError(f"File not found: {filepath}")
 

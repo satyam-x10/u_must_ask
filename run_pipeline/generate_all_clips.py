@@ -3,18 +3,7 @@ import json
 from scripts.clip import generate_scene_clip
 
 def generate_all_clips(filepath_to_script: str):
-    """
-    Example:
-        filepath_to_script = "outputs/scripts/script_12.json"
-
-    It will load:
-        outputs/scripts/script_12.json
-
-    And use:
-        outputs/images/12/
-        outputs/audios/12/
-        outputs/clips/12/
-    """
+    
 
     # Extract script ID from filename
     filename = os.path.basename(filepath_to_script)          # script_12.json
@@ -43,6 +32,7 @@ def generate_all_clips(filepath_to_script: str):
         image_path = os.path.join(images_dir, f"scene_{scene_id}.png")
         audio_path = os.path.join(audios_dir, f"scene_{scene_id}.wav")
         output_path = os.path.join(clips_dir, f"scene_{scene_id}.mp4")
+        
 
         if not os.path.exists(image_path):
             print(f"Skipping scene {scene_id}: missing image — {image_path}")
