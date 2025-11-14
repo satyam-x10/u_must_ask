@@ -5,8 +5,9 @@ from pydub import AudioSegment
 
 # ---------- CONFIG ----------
 MODEL_NAME = "tts_models/en/vctk/vits"  # Multi-speaker
-DEFAULT_SPEAKER = "p238"
+DEFAULT_SPEAKER = "p236"
 
+# 236,237
 
 # | ID       | Notes                                      |
 # | -------- | ------------------------------------------ |
@@ -59,13 +60,13 @@ def generate_tts_audio(text: str, output_path: str, emotion: str = "calm") -> st
 
     try:
         tts.tts_to_file(
-            text=text,
-            speaker=DEFAULT_SPEAKER,
-            file_path=output_path,
-            speed=preset["speed"],
-            temperature=preset["temperature"],
-            glow_tts_alpha=preset["glow_tts_alpha"]
-        )
+    text=text,
+    file_path=output_path,
+    speed=preset["speed"],
+    temperature=preset["temperature"],
+    glow_tts_alpha=preset["glow_tts_alpha"],
+)
+
 
         AudioSegment.from_wav(output_path)  # Validate WAV
 

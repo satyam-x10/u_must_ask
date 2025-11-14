@@ -1,9 +1,19 @@
 import os
+os.environ["OMP_NUM_THREADS"] = "2"
+os.environ["MKL_NUM_THREADS"] = "2"
+os.environ["OPENBLAS_NUM_THREADS"] = "2"
+os.environ["VECLIB_MAXIMUM_THREADS"] = "2"
+os.environ["NUMEXPR_NUM_THREADS"] = "2"
+
 import time
 from PIL import Image, ImageDraw, ImageFont
 
 import torch
 from diffusers import KandinskyPriorPipeline, KandinskyPipeline
+
+# Set PyTorch thread count
+torch.set_num_threads(2)
+torch.set_num_interop_threads(2)
 
 prior = KandinskyPriorPipeline.from_pretrained(
         "kandinsky-community/kandinsky-2-1-prior",
@@ -52,3 +62,5 @@ def generate_image_from_prompt(prompt: str, output_path: str):
 
     print(f"Image saved: {output_path} (in {round(time.time() - t0, 1)}s)")
     return output_path
+
+
