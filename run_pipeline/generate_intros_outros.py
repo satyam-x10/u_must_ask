@@ -1,6 +1,6 @@
 import json
 import os
-from scripts.intro_outro import  generate_intro_clip
+from scripts.intro_outro import  generate_intro_clip , generate_outro_clip
 
 def generate_intros_outros(TITLE_ID: str):
     # Load titles.json
@@ -18,8 +18,8 @@ def generate_intros_outros(TITLE_ID: str):
     base_dir = f"outputs"
     thumb_path = f"{base_dir}/thumbnails/thumb_{TITLE_ID}.png"
 
-    intro_audio = f"{base_dir}/{TITLE_ID}/audio/intro.wav"
-    outro_audio = f"{base_dir}/{TITLE_ID}/audio/outro.wav"
+    intro_audio = f"{base_dir}/audios/{TITLE_ID}/intro.wav"
+    outro_audio = f"{base_dir}/audios/{TITLE_ID}/outro.wav"
 
     save_intro = f"outputs/clips/{TITLE_ID}/intro.mp4"
     save_outro = f"outputs/clips/{TITLE_ID}/outro.mp4"
@@ -35,10 +35,9 @@ def generate_intros_outros(TITLE_ID: str):
     intro_clip.write_videofile(save_intro, fps=30, codec="libx264", audio_codec="aac")
 
     # Generate 2-sec outro (no text)
-    # outro_clip = generate_outro_clip(
-    #     image_path=thumb_path,
-    #     audio_path=outro_audio,
-    # )
-    # outro_clip.write_videofile(save_outro, fps=30, codec="libx264", audio_codec="aac")
+    outro_clip = generate_outro_clip(
+        audio_path=outro_audio,
+    )
+    outro_clip.write_videofile(save_outro, fps=30, codec="libx264", audio_codec="aac")
 
     return save_intro, save_outro
