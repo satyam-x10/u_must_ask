@@ -3,7 +3,7 @@
 # from run_pipeline.generate_audios import generate_audios
 # from scripts.tts_env import activate_ttsenv, deactivate_ttsenv
 from run_pipeline.generate_all_clips import generate_all_clips
-# from run_pipeline.generate_final_video import generate_final_video
+from run_pipeline.generate_final_video import generate_final_video
 
 import json
 import os
@@ -72,6 +72,6 @@ for tid in range(START_ID, END_ID + 1):
     # -------------------------------------
     # 5) Merge all clips into one final video (optional)
     # -------------------------------------
-    # final_video_path = generate_final_video(script_path)
+    final_video_path = generate_final_video(script_path)
 
 print("\n✅ ALL TITLES PROCESSED SUCCESSFULLY!")

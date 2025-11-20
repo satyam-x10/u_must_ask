@@ -29,6 +29,8 @@ def generate_all_clips(filepath_to_script: str):
     for scene in script["scenes"]:
         scene_id = scene["id"]
 
+        audio_text = scene.get("text", "").strip()
+
         image_path = os.path.join(images_dir, f"scene_{scene_id}.png")
         audio_path = os.path.join(audios_dir, f"scene_{scene_id}.wav")
         output_path = os.path.join(clips_dir, f"scene_{scene_id}.mp4")
@@ -43,6 +45,6 @@ def generate_all_clips(filepath_to_script: str):
             continue
 
         print(f"Generating clip for scene {scene_id}...")
-        generate_scene_clip(image_path, audio_path, output_path)
+        generate_scene_clip(image_path, audio_path, output_path,audio_text)
 
     print("All clips generated successfully.")
