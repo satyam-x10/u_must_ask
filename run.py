@@ -68,10 +68,10 @@ for tid in range(START_ID, END_ID + 1):
     # -------------------------------------
     # 4) Merge image + audio into clips (optional)
     # -------------------------------------
-    generate_all_clips(script_path)
+    # generate_all_clips(script_path)
 
     #  generate intro and outro clip
-    generate_intros_outros(TITLE_ID)
+    # generate_intros_outros(TITLE_ID)
     # -------------------------------------
     # 6) Merge all clips into one final video (optional)
     # -------------------------------------
