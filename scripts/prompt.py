@@ -12,6 +12,7 @@ STRICT JSON FORMAT (DO NOT ADD ANYTHING OUTSIDE THIS):
 
 {{
   "title": "{title}",
+  "description": "An educational video description about {title}.",
   "scenes": [
     {{
       "id": 1,
@@ -30,7 +31,7 @@ VISUAL STYLE RULES (CRITICAL):
 
 RULES:
 - Output ONLY valid JSON.
-- 30–40 scenes.
+- 30–40 scenes.But make sure that story is finished without any loose ends, so can be more than 40 if needed.
 - Each scene must include: id, text, image_prompt, emotion.
 - Emotions allowed: ["happy","sad","angry","surprised","excited","calm"].
 - Image Prompts: 15–30 words. Focus on the subject, composition, and visual clarity.
