@@ -1,7 +1,7 @@
 import os
 import json
 from scripts.clip import generate_scene_clip
-from scripts.interactive_clip import generate_interactive_clip
+
 
 def generate_all_clips(filepath_to_script: str):
     
@@ -30,35 +30,52 @@ def generate_all_clips(filepath_to_script: str):
     
     use_interactive = input("\nEnable Interactive Mode? (This will require manual verification for each clip) [y/N]: ").strip().lower() == 'y'
     
+    # Collect scenes for batch processing
+    batch_scenes = []
+    
+    # First pass: Identify what needs to be made
     for scene in script["scenes"]:
         scene_id = scene["id"]
-
-        audio_text = scene.get("text", "").strip()
-
         image_path = os.path.join(images_dir, f"scene_{scene_id}.png")
         audio_path = os.path.join(audios_dir, f"scene_{scene_id}.wav")
         output_path = os.path.join(clips_dir, f"scene_{scene_id}.mp4")
-        
 
-        if not os.path.exists(image_path):
-            print(f"Skipping scene {scene_id}: missing image — {image_path}")
+        if not os.path.exists(image_path) or not os.path.exists(audio_path):
             continue
-
-        if not os.path.exists(audio_path):
-            print(f"Skipping scene {scene_id}: missing audio — {audio_path}")
-            continue
-
+            
         if os.path.exists(output_path):
-            print(f"Skipping scene {scene_id}: clip already exists — {output_path}")
+            print(f"Skipping scene {scene_id}: clip already exists")
             continue
+            
+        scene_data = {
+            "id": scene_id,
+            "image_path": image_path,
+            "audio_path": audio_path,
+            "output_path": output_path,
+            "audio_text": scene.get("text", "")
+        }
+        batch_scenes.append(scene_data)
 
-        print(f"Generating clip for scene {scene_id}...")
+    # Run Batch Processor if interactive
+    from scripts.interactive_clip import run_batch_processor
+    
+    if use_interactive and batch_scenes:
+        print(f"\n[Main] Sending {len(batch_scenes)} scenes to Batch Processor...")
+        run_batch_processor(batch_scenes)
         
-        success = False
-        if use_interactive:
-            success = generate_interactive_clip(image_path, audio_path, output_path, audio_text)
-        
-        if not success:
-            generate_scene_clip(image_path, audio_path, output_path,audio_text)
+    # Final Pass: Check exists (Batch might have skipped some) and generate static fallback
+    for scene in script["scenes"]:
+        scene_id = scene["id"]
+        image_path = os.path.join(images_dir, f"scene_{scene_id}.png")
+        audio_path = os.path.join(audios_dir, f"scene_{scene_id}.wav")
+        output_path = os.path.join(clips_dir, f"scene_{scene_id}.mp4")
+        audio_text = scene.get("text", "") # Getting text again
+
+        # Same checks
+        if not os.path.exists(image_path) or not os.path.exists(audio_path): continue
+        if os.path.exists(output_path): continue # If batch made it, we skip
+
+        print(f"Generating STATIC clip for scene {scene_id} (Fallback)...")
+        generate_scene_clip(image_path, audio_path, output_path, audio_text)
 
     print("All clips generated successfully.")
