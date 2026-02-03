@@ -1,6 +1,7 @@
 import os
 import json
 from scripts.clip import generate_scene_clip
+from scripts.interactive_clip import generate_interactive_clip
 
 def generate_all_clips(filepath_to_script: str):
     
@@ -26,6 +27,9 @@ def generate_all_clips(filepath_to_script: str):
         script = json.load(f)
 
     # Iterate scenes
+    
+    use_interactive = input("\nEnable Interactive Mode? (This will require manual verification for each clip) [y/N]: ").strip().lower() == 'y'
+    
     for scene in script["scenes"]:
         scene_id = scene["id"]
 
@@ -49,6 +53,12 @@ def generate_all_clips(filepath_to_script: str):
             continue
 
         print(f"Generating clip for scene {scene_id}...")
-        generate_scene_clip(image_path, audio_path, output_path,audio_text)
+        
+        success = False
+        if use_interactive:
+            success = generate_interactive_clip(image_path, audio_path, output_path, audio_text)
+        
+        if not success:
+            generate_scene_clip(image_path, audio_path, output_path,audio_text)
 
     print("All clips generated successfully.")
