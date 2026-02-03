@@ -53,7 +53,7 @@ def generate_images(filepath: str) -> list:
 
     for scene in scenes:
         scene_id = scene.get("id", "unknown")
-        prompt = scene.get("prompt", "").strip()
+        prompt = scene.get("image_prompt", "").strip()
 
         if not prompt:
             print(f"Scene {scene_id} has no prompt, skipping.")

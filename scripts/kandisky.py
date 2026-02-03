@@ -51,7 +51,7 @@ def generate_image_from_prompt(prompt: str, output_path: str):
         prompt=prompt,
         image_embeds=image_embeds,
         negative_image_embeds=negative_image_embeds,
-        num_inference_steps=1,
+        num_inference_steps=20,
         height = 360,
         width = 640
     ).images[0]

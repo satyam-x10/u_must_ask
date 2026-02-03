@@ -44,6 +44,10 @@ def generate_all_clips(filepath_to_script: str):
             print(f"Skipping scene {scene_id}: missing audio — {audio_path}")
             continue
 
+        if os.path.exists(output_path):
+            print(f"Skipping scene {scene_id}: clip already exists — {output_path}")
+            continue
+
         print(f"Generating clip for scene {scene_id}...")
         generate_scene_clip(image_path, audio_path, output_path,audio_text)
 
