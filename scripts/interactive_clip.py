@@ -142,8 +142,6 @@ def generate_single_clip_from_data(fg_pil, bg_pil, choice, audio_path, output_pa
         fg_clip = fg_clip_static.set_position(make_shake)
         final_clip = CompositeVideoClip([bg_clip, fg_clip], size=(video_width, video_height))
 
-    # --- NEW EFFECTS ---
-
     elif choice == "6": # BW to Color Reveal
         # Fade from Grayscale to Color
         bg_bw = bg_clip.fx(vfx.blackwhite)
@@ -155,38 +153,10 @@ def generate_single_clip_from_data(fg_pil, bg_pil, choice, audio_path, output_pa
         
         final_clip = CompositeVideoClip([bg_anim, fg_anim], size=(video_width, video_height))
 
-    elif choice == "7": # Sepia Vintage
-        def sepia_filter(im):
-            # Simple sepia matrix
-            sepia_matrix = np.array([[0.393, 0.769, 0.189],
-                                     [0.349, 0.686, 0.168],
-                                     [0.272, 0.534, 0.131]])
-            # Apply to RGB channels
-            img_sepia = im.copy()
-            img_sepia[:,:,:3] = im[:,:,:3].dot(sepia_matrix.T)
-            np.clip(img_sepia, 0, 255, out=img_sepia)
-            return img_sepia
+    # REMOVED Sepia (7)
+    # REMOVED Blur (8)
 
-        bg_anim = bg_clip.fl_image(sepia_filter)
-        fg_anim = fg_clip_static.fl_image(sepia_filter)
-        final_clip = CompositeVideoClip([bg_anim, fg_anim], size=(video_width, video_height))
-
-    elif choice == "8": # Blur Focus (BG Blur)
-        # Blur BG heavily
-        # Pre-compute blurred image to save time
-        bg_pil_blur = bg_pil.filter(ImageFilter.GaussianBlur(10))
-        bg_clip_blur = ImageClip(np.array(bg_pil_blur), duration=duration)
-        
-        # Pulse between sharp and blur
-        # Simple crossfade for bloom effect
-        bg_anim = CompositeVideoClip([
-            bg_clip,
-            bg_clip_blur.set_start(0).crossfadein(1).crossfadeout(1)
-        ]).set_duration(duration)
-        
-        final_clip = CompositeVideoClip([bg_anim, fg_clip_static], size=(video_width, video_height))
-
-    elif choice == "9": # Flash / Strobe
+    elif choice == "7": # Flash / Strobe (Was 9)
         # Increased brightness pulses
         def flash_effect(get_frame, t):
             frame = get_frame(t)
@@ -197,26 +167,10 @@ def generate_single_clip_from_data(fg_pil, bg_pil, choice, audio_path, output_pa
         bg_anim = bg_clip.fl(flash_effect)
         final_clip = CompositeVideoClip([bg_anim, fg_clip_static], size=(video_width, video_height))
 
-    elif choice == "10": # Ghost Hover
-        # Main FG + Semi-transparent echo
-        ghost = fg_clip_static.set_opacity(0.4).set_start(0.2).set_position(lambda t: ("center", video_height/2 - fg_clip_static.h/2 - 20))
-        final_clip = CompositeVideoClip([bg_clip, ghost, fg_clip_static], size=(video_width, video_height))
+    # REMOVED Ghost (10)
+    # REMOVED Color Cycle (11)
 
-    elif choice == "11": # Color Cycle (Hue Shift)
-        # Creating a hue shift manually is expensive in numpy per frame.
-        # Let's do a simple channel shuffle/tint for "Neon" feel
-        def color_shift(get_frame, t):
-            im = get_frame(t)
-            # Shift tint based on time
-            shift = int(t * 50) % 255
-            # Just tint R channel
-            im[:,:,0] = np.clip(im[:,:,0] + shift, 0, 255)
-            return im
-            
-        bg_anim = bg_clip.fl(color_shift)
-        final_clip = CompositeVideoClip([bg_anim, fg_clip_static], size=(video_width, video_height))
-
-    elif choice == "12": # Vignette Pulse
+    elif choice == "8": # Vignette Pulse (Was 12)
         # Create vignette mask
         def make_vignette(t):
             # Pulse opacity
@@ -241,25 +195,14 @@ def generate_single_clip_from_data(fg_pil, bg_pil, choice, audio_path, output_pa
         bg_anim = bg_clip.fl(apply_vignette)
         final_clip = CompositeVideoClip([bg_anim, fg_clip_static], size=(video_width, video_height))
 
-    elif choice == "13": # Spotlight (Dark BG)
+    elif choice == "9": # Spotlight (Was 13)
         bg_dark = bg_clip.fx(vfx.colorx, 0.3) # Darken BG
         # FG normal (popping out)
         final_clip = CompositeVideoClip([bg_dark, fg_clip_static], size=(video_width, video_height))
 
-    elif choice == "14": # Cinematic Bars
-        # Animated black bars
-        def draw_bars(get_frame, t):
-            im = get_frame(t)
-            bar_height = int(100 * (t/duration)) if t < 1 else 100 # Animate in
-            im[:bar_height, :] = 0
-            im[-bar_height:, :] = 0
-            return im
-            
-        final_clip = CompositeVideoClip([bg_clip, fg_clip_static], size=(video_width, video_height))
-        # Apply filter to whole comp
-        final_clip = final_clip.fl(draw_bars)
+    # REMOVED Cinematic Bars (14)
 
-    elif choice == "15": # Mirror Reflection
+    elif choice == "10": # Mirror Reflection (Was 15)
         # Flip FG vertical
         reflection = fg_clip_static.fx(vfx.mirror_y)
         # Position below
@@ -399,7 +342,7 @@ class BatchVerificationApp:
         lbl_fg = tk.Label(row_frame, image=fg_tk)
         lbl_fg.pack(side="left", padx=5)
         
-        # 3. Controls (Updated with 15 options)
+        # 3. Controls (Updated with 10 options)
         ctrl_frame = Frame(row_frame)
         ctrl_frame.pack(side="left", padx=30, fill="y")
         
@@ -424,20 +367,16 @@ class BatchVerificationApp:
             ("4. Zoom BG", "4"),
             ("5. Shake (Glitch)", "5"),
             ("6. BW to Color", "6"),
-            ("7. Sepia Vintage", "7"),
-            ("8. Blur Focus", "8"),
-            ("9. Flash Strobe", "9"),
-            ("10. Ghost Hover", "10"),
-            ("11. Color Cycle", "11"),
-            ("12. Vignette Pulse", "12"),
-            ("13. Spotlight", "13"),
-            ("14. Cinematic Bars", "14"),
-            ("15. Mirror Reflect", "15"),
+            ("7. Flash Strobe", "7"),
+            ("8. Vignette Pulse", "8"),
+            ("9. Spotlight", "9"),
+            ("10. Mirror Reflect", "10"),
             ("Skip (Static)", "0")
         ]
         
         for i, (text, val) in enumerate(options):
-            parent = col1 if i < 8 else col2
+            # Split after 5 items
+            parent = col1 if i < 5 else col2
             tk.Radiobutton(parent, text=text, variable=choice_var, value=val, font=("Arial", 10)).pack(anchor="w")
 
     def on_generate(self):

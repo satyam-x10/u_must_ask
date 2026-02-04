@@ -17,8 +17,8 @@ def test_all_effects():
     script_id = "1" 
     base_dir = "outputs"
     
-    img_path = os.path.join(base_dir, "images", script_id, "scene_1.png")
-    audio_path = os.path.join(base_dir, "audios", script_id, "scene_1.wav")
+    img_path = os.path.join(base_dir, "images", script_id, "scene_6.png")
+    audio_path = os.path.join(base_dir, "audios", script_id, "scene_6.wav")
     
     output_dir = os.path.join("test_outputs")
     os.makedirs(output_dir, exist_ok=True)
