@@ -46,8 +46,7 @@ def test_all_effects():
         ("6", "BW to Color", "Fades from Grayscale to Full Color"),
         ("7", "Flash Strobe", "Energetic brightness pulses/flashing"),
         ("8", "Vignette Pulse", "Dark pulsing corners/edges"),
-        ("9", "Spotlight", "Darkened Background, bright Subject"),
-        ("10", "Mirror Reflect", "Upside down reflection at bottom")
+        ("9", "Spotlight", "Darkened Background, bright Subject")
     ]
 
     # 4. Generate Loop

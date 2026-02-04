@@ -202,15 +202,6 @@ def generate_single_clip_from_data(fg_pil, bg_pil, choice, audio_path, output_pa
 
     # REMOVED Cinematic Bars (14)
 
-    elif choice == "10": # Mirror Reflection (Was 15)
-        # Flip FG vertical
-        reflection = fg_clip_static.fx(vfx.mirror_y)
-        # Position below
-        reflection = reflection.set_position(lambda t: ("center", video_height/2 + fg_clip_static.h/2 - 20))
-        reflection = reflection.set_opacity(0.3)
-        # Apply
-        final_clip = CompositeVideoClip([bg_clip, reflection, fg_clip_static], size=(video_width, video_height))
-
     else: # Skip/Default
         # Just return basic
         return False
@@ -370,7 +361,6 @@ class BatchVerificationApp:
             ("7. Flash Strobe", "7"),
             ("8. Vignette Pulse", "8"),
             ("9. Spotlight", "9"),
-            ("10. Mirror Reflect", "10"),
             ("Skip (Static)", "0")
         ]
         
