@@ -1,5 +1,7 @@
 import os
 import json
+import wave
+import contextlib
 from scripts.clip import generate_scene_clip
 
 
@@ -79,3 +81,55 @@ def generate_all_clips(filepath_to_script: str):
         generate_scene_clip(image_path, audio_path, output_path, audio_text)
 
     print("All clips generated successfully.")
+
+    # ---------------------------------------------------------
+    # Generate audio.json (Cumulative Metadata)
+    # ---------------------------------------------------------
+    print(f"\n[Metadata] Generating audio.json for folder {script_id}...")
+    
+    audio_meta = {
+        "script_id": script_id,
+        "segments": []
+    }
+    
+    total_duration = 0.0
+    
+    for scene in script["scenes"]:
+        scene_id = scene["id"]
+        audio_path = os.path.join(audios_dir, f"scene_{scene_id}.wav")
+        
+        if not os.path.exists(audio_path):
+            continue
+            
+        # Get Duration using wave (faster/lighter than MoviePy for just duration)
+        duration = 0.0
+        try:
+            with contextlib.closing(wave.open(audio_path, 'r')) as f:
+                frames = f.getnframes()
+                rate = f.getframerate()
+                duration = frames / float(rate)
+        except Exception as e:
+            print(f"Warning: Could not read duration for {audio_path}: {e}")
+            
+        start_time = total_duration
+        end_time = total_duration + duration
+        
+        audio_meta["segments"].append({
+            "scene_id": scene_id,
+            "file": f"scene_{scene_id}.wav",
+            "text": scene.get("text", ""),
+            "duration": duration,
+            "start_time": round(start_time, 3),
+            "end_time": round(end_time, 3)
+        })
+        
+        total_duration = end_time
+
+    audio_meta["total_duration_result"] = round(total_duration, 3)
+    
+    # Save to audio folder
+    json_out_path = os.path.join(audios_dir, "audio.json")
+    with open(json_out_path, "w", encoding="utf-8") as f:
+        json.dump(audio_meta, f, indent=4)
+        
+    print(f"[Metadata] Saved audio.json to {json_out_path}")

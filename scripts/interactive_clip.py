@@ -227,11 +227,11 @@ def generate_single_clip_from_data(fg_pil, bg_pil, choice, audio_path, output_pa
             # But safer to just wrap it
             final_clip = CompositeVideoClip(final_clip.clips + subtitle_clips, size=(video_width, video_height))
 
-    final_clip = final_clip.set_audio(audio)
+    # final_clip = final_clip.set_audio(audio) # REMOVED AUDIO as per request
     
     # Write File
     final_clip.write_videofile(
-        output_path, fps=24, codec="libx264", audio_codec="aac", threads=4, logger=None
+        output_path, fps=24, codec="libx264", audio=False, threads=4, logger=None
     )
     return True
 
