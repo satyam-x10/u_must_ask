@@ -1,7 +1,6 @@
 
 import os
 import sys
-import shutil
 
 # Ensure we can import from local scripts
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -10,15 +9,15 @@ from scripts.interactive_clip import extract_layers, generate_single_clip_from_d
 
 def test_all_effects():
     print("========================================")
-    print("      Testing All 15 Effects            ")
+    print("      Testing All 10 Effects            ")
     print("========================================")
 
     # 1. Setup Paths (Assumption: Script ID 1 exists)
     script_id = "1" 
     base_dir = "outputs"
     
-    img_path = os.path.join(base_dir, "images", script_id, "scene_6.png")
-    audio_path = os.path.join(base_dir, "audios", script_id, "scene_6.wav")
+    img_path = os.path.join(base_dir, "images", script_id, "scene_1.png")
+    audio_path = os.path.join(base_dir, "audios", script_id, "scene_1.wav")
     
     output_dir = os.path.join("test_outputs")
     os.makedirs(output_dir, exist_ok=True)
@@ -26,14 +25,18 @@ def test_all_effects():
     if not os.path.exists(img_path) or not os.path.exists(audio_path):
         print(f"Error: Could not find Scene 1 assets at {img_path}")
         print("Please ensure you have generated assets for Script 1.")
-        return
+        # Fallback check for Scene 6 just in case
+        img_path = os.path.join(base_dir, "images", script_id, "scene_6.png")
+        audio_path = os.path.join(base_dir, "audios", script_id, "scene_6.wav")
+        if not os.path.exists(img_path):
+             return
 
     # 2. Extract Layers (Once)
     print(f"\n[1/3] Extracting Layers for {img_path}...")
     fg, bg, orig = extract_layers(img_path)
     print("Extraction Complete.")
 
-    # 3. Define Effects Map with Descriptions
+    # 3. Define Effects Map with Descriptions (Pruned List)
     effects = [
         ("1", "Zoom Subject", "Strong zoom on subject (1.15x) + subtle BG zoom"),
         ("2", "Parallax", "Subject moves Right, BG moves Left (3D slide)"),
@@ -41,15 +44,10 @@ def test_all_effects():
         ("4", "Zoom BG", "Background zooms in, subject stays centered"),
         ("5", "Shake (Glitch)", "Random jitter/vibration (Update 6fps)"),
         ("6", "BW to Color", "Fades from Grayscale to Full Color"),
-        ("7", "Sepia Vintage", "Warm old-photo retro look"),
-        ("8", "Blur Focus", "Background pulses between blur and sharp"),
-        ("9", "Flash Strobe", "Energetic brightness pulses/flashing"),
-        ("10", "Ghost Hover", "Transparent echo/trail behind subject"),
-        ("11", "Color Cycle", "Neon hue shifting/tinting on background"),
-        ("12", "Vignette Pulse", "Dark pulsing corners/edges"),
-        ("13", "Spotlight", "Darkened Background, bright Subject"),
-        ("14", "Cinematic Bars", "Widescreen black bars animate in"),
-        ("15", "Mirror Reflect", "Upside down reflection at bottom")
+        ("7", "Flash Strobe", "Energetic brightness pulses/flashing"),
+        ("8", "Vignette Pulse", "Dark pulsing corners/edges"),
+        ("9", "Spotlight", "Darkened Background, bright Subject"),
+        ("10", "Mirror Reflect", "Upside down reflection at bottom")
     ]
 
     # 4. Generate Loop
@@ -63,7 +61,7 @@ def test_all_effects():
         out_path = os.path.join(output_dir, filename)
         
         # Audio Text for Caption Testing
-        sample_text = f"Effect {choice}: {name} - {desc}"
+        sample_text = f"Effect {choice}: {name}"
         
         try:
             success = generate_single_clip_from_data(

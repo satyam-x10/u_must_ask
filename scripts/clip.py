@@ -24,7 +24,11 @@ def create_caption_image(text, width, fontsize=34, min_fontsize=34):
     # Render at 3x resolution for extreme sharpness
     scale = 3
 
-    final_height = 36  # FIXED caption height
+    # Increase base font size slightly for "bigger" look
+    fontsize = int(fontsize * 1.3)
+    min_fontsize = int(min_fontsize * 1.3)
+
+    final_height = 50  # Increased height for bigger text
     W = width * scale
     H = final_height * scale
 
@@ -32,7 +36,8 @@ def create_caption_image(text, width, fontsize=34, min_fontsize=34):
     draw = ImageDraw.Draw(img)
 
     def load_ttf(size):
-        for f in ["arial.ttf", "DejaVuSans.ttf"]:
+        # Try to find a Bold font variant
+        for f in ["arialbd.ttf", "arial.ttf", "DejaVuSans-Bold.ttf", "DejaVuSans.ttf"]:
             try:
                 return ImageFont.truetype(f, size)
             except:
@@ -43,23 +48,34 @@ def create_caption_image(text, width, fontsize=34, min_fontsize=34):
     font = load_ttf(fs)
 
     # Shrink font if wider than allowed
-    while draw.textlength(text, font=font) > W - (12 * scale) and fs > min_fontsize * scale:
+    while draw.textlength(text, font=font) > W - (20 * scale) and fs > min_fontsize * scale:
         fs -= scale
         font = load_ttf(fs)
 
     ascent, descent = font.getmetrics()
     text_h = ascent + descent
+    text_w = draw.textlength(text, font=font)
+    
     y = (H - text_h) // 2
+    x = (W - text_w) // 2
+    
+    # Draw White Background (with some padding)
+    padding = 10 * scale
+    bg_box = [
+        x - padding, 
+        y - padding/2, 
+        x + text_w + padding, 
+        y + text_h + padding/2
+    ]
+    draw.rectangle(bg_box, fill=(255, 255, 255, 255))
 
-    stroke = max(1, scale // 2)
-
+    # Draw Black Text (Bolder if font supported it, otherwise just black)
     draw.text(
-        ((W - draw.textlength(text, font=font)) / 2, y),
+        (x, y),
         text,
         font=font,
-        fill=(255, 255, 255, 255),
-        stroke_width=stroke * 4,
-        stroke_fill=(0, 0, 0, 255),
+        fill=(0, 0, 0, 255),
+        stroke_width=0, 
     )
 
     img = img.resize((width, final_height), Image.LANCZOS)
