@@ -19,37 +19,37 @@ STRICT JSON FORMAT (DO NOT ADD OR REMOVE FIELDS):
     {{
       "id": 1,
       "text": "A spoken-style line that introduces or advances the idea.",
-      "image_prompt": "Abstract symbolic surreal visual representing the idea, calm dream-like atmosphere, minimalist composition.",
-      "video_prompt": "Same scene with subtle natural motion, slow cinematic movement, calm surreal atmosphere.",
+      "image_prompt": "Abstract symbolic surreal visual of a single cartoon-style object placed against a simple cartoon background, calm dream-like atmosphere, minimalist composition.",
       "emotion": "calm"
     }}
   ]
 }}
 
 GLOBAL VISUAL STYLE RULES (CRITICAL):
-- Visual Style: Abstract, symbolic, clean, surreal, dream-like, documentary tone.
+- Visual Style: Abstract, symbolic, clean, surreal, CARTOONISH.
+- Rendering Style: Soft cartoon illustration, simplified shapes, smooth color fills.
 - Mood: Calm, introspective, slightly unsettling but safe.
-- Lighting: Soft cinematic lighting, gentle glow, no harsh shadows.
-- Composition: Minimalist, single clear focal point, generous negative space.
-- Detail: Medium detail, smooth gradients only, no texture noise.
+- Lighting: Soft cartoon lighting, gentle glow, no realistic lighting.
+- Composition: EXACTLY ONE main object and EXACTLY ONE background element.
+- Detail: Low-to-medium detail, flat or smooth gradients, no realism.
 - No faces, no realistic humans, no text inside images.
+- No additional objects, no clutter, no secondary elements.
 
 IMAGE PROMPT RULES:
 - Every image_prompt MUST start with:
-  "Abstract symbolic surreal visual of..."
-- Length: 15–30 words.
-- Describe subject + composition + mood.
-- Do NOT mention camera movement.
+  "cartoonish image of..."
+- Use simple, everyday words only.
+- Write like a normal person, not like an artist or academic.
+- Example style:
+  "cartoonish image of a kite flying in a cloudy sky"
+- Length: 6–12 words only.
+- One main object and one background.
+- Do NOT use fancy words like: abstract, symbolic, surreal, cinematic, atmospheric.
+- No metaphors, no emotions, no artistic language.
 
-VIDEO PROMPT RULES:
-- Every video_prompt MUST describe:
-  subtle motion, slow natural movement, stable camera.
-- Example motions: drifting, gentle sway, slow pulsing light.
-- NO fast motion, NO shaking, NO cuts, NO chaos.
-- Video prompt must visually match the image prompt.
 
 SCENE RULES:
-- Each scene must include: id, text, image_prompt, video_prompt, emotion.
+- Each scene must include: id, text, image_prompt, emotion.
 - Scene IDs must be sequential starting from 1.
 - Text must be spoken-style narration (5–8 seconds per scene).
 - One idea per scene. No repetition.
