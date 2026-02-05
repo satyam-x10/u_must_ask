@@ -53,22 +53,43 @@ def generate_images(filepath: str) -> list:
 
     for scene in scenes:
         scene_id = scene.get("id", "unknown")
-        prompt = scene.get("image_prompt", "").strip()
-
-        if not prompt:
-            print(f"Scene {scene_id} has no prompt, skipping.")
+        
+        # Support both 'image_prompts' (list) and legacy 'image_prompt' (str)
+        prompts = scene.get("image_prompts", [])
+        if not prompts:
+             single_prompt = scene.get("image_prompt", "")
+             if single_prompt:
+                 prompts = [single_prompt]
+        
+        if not prompts:
+            print(f"Scene {scene_id} has no prompts, skipping.")
             continue
 
-        filename = f"scene_{scene_id}.png"
-        output_path = os.path.join(image_dir, filename)
+        # Create scene_id folder
+        scene_dir = os.path.join(image_dir, f"scene_{scene_id}")
+        os.makedirs(scene_dir, exist_ok=True)
 
-        try:
-            path = generate_image_from_prompt(prompt, output_path)
-            generated.append(path)
-        except Exception as e:
-            print(f"Error generating scene {scene_id}: {e}")
+        for i, prompt in enumerate(prompts, start=1):
+            if not prompt.strip():
+                continue
+                
+            # filename: img_1.png, img_2.png inside scene_X folder
+            filename = f"img_{i}.png" 
+            output_path = os.path.join(scene_dir, filename)
 
-        time.sleep(0.2)
+            if os.path.exists(output_path):
+                 print(f"  -> {filename} already exists in scene_{scene_id}, skipping.")
+                 generated.append(output_path)
+                 continue
+
+            try:
+                print(f"Generating scene {scene_id} image {i}...")
+                path = generate_image_from_prompt(prompt, output_path)
+                generated.append(path)
+            except Exception as e:
+                print(f"Error generating scene {scene_id} image {i}: {e}")
+            
+            time.sleep(0.2)
 
     print(f"\nFinished. {len(generated)} images saved in {image_dir}")
     return generated

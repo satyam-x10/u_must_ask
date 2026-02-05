@@ -38,9 +38,40 @@ def generate_all_clips(filepath_to_script: str):
     # First pass: Identify what needs to be made
     for scene in script["scenes"]:
         scene_id = scene["id"]
+        # Default guess (Legacy)
         image_path = os.path.join(images_dir, f"scene_{scene_id}.png")
+        
+        # Check for NEW nested structure: scene_{id}/img_1.png
+        scene_subfolder = os.path.join(images_dir, f"scene_{scene_id}")
+        if os.path.exists(scene_subfolder):
+            # Prefer img_1.png as the "main" one for the batch list
+            # The interactive batch processor will find the rest
+            potential_main = os.path.join(scene_subfolder, "img_1.png")
+            if os.path.exists(potential_main):
+                image_path = potential_main
+        
+        # Fallback: Check for flat indexed variants scene_{id}_1.png
+        elif not os.path.exists(image_path):
+            for i in range(1, 4):
+                 alt = os.path.join(images_dir, f"scene_{scene_id}_{i}.png")
+                 if os.path.exists(alt):
+                     image_path = alt
+                     break
+        
         audio_path = os.path.join(audios_dir, f"scene_{scene_id}.wav")
         output_path = os.path.join(clips_dir, f"scene_{scene_id}.mp4")
+
+        # Basic existence check (image_path must exist by now or we skip)
+        if not os.path.exists(image_path):
+             # Try one more time to just check if folder exists, maybe img_1 is missing but img_2 exists?
+             # For simplicity, we assume img_1 is the anchor.
+             # Actually, let's be robust:
+             if os.path.exists(scene_subfolder):
+                 for i in range(1, 4):
+                     alt = os.path.join(scene_subfolder, f"img_{i}.png")
+                     if os.path.exists(alt):
+                         image_path = alt
+                         break
 
         if not os.path.exists(image_path) or not os.path.exists(audio_path):
             continue
@@ -74,6 +105,14 @@ def generate_all_clips(filepath_to_script: str):
         audio_text = scene.get("text", "") # Getting text again
 
         # Same checks
+        # Same checks
+        if not os.path.exists(image_path):
+             for i in range(1, 4):
+                 alt = os.path.join(images_dir, f"scene_{scene_id}_{i}.png")
+                 if os.path.exists(alt):
+                     image_path = alt
+                     break
+                     
         if not os.path.exists(image_path) or not os.path.exists(audio_path): continue
         if os.path.exists(output_path): continue # If batch made it, we skip
 

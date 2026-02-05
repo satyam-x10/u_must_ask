@@ -1,71 +1,65 @@
-def build_script_prompt(title: str) -> str:
+def build_educational_script_prompt(title: str) -> str:
     return f"""
-You are an expert AI script generator specialized in psychology, human behavior, and educational storytelling.
+You are an expert educational storyteller and psychology researcher.
+Your task is to write a deep, engaging, and clear educational script on the topic: "{title}".
 
-Your entire output MUST be ONLY a valid JSON object.
-NO markdown. NO code fences. NO explanations.
-If anything appears outside JSON, the system will crash.
+GUIDELINES:
+1.  **Structure**: Start with a strong hook, then explain the concept clearly, provide examples/insights, and end with a resolution/takeaway.
+2.  **Tone**: Calm, human, professional, curious, and intelligent. NOT motivational hype.
+3.  **Length**: Comprehensive enough to cover the topic well (approx. 30-40 phrases/ideas).
+4.  **Format**: Just write the raw script text. Paragraphs are fine.
 
-Generate a long YouTube-style educational script with approximately 30–40 scenes.
-If the topic requires more scenes to finish the idea cleanly, you may exceed 40.
-The story MUST feel complete, with no loose ends.
+GOAL:
+Teach the user about "{title}" in a way that feels like a high-quality documentary narration.
+"""
 
-STRICT JSON FORMAT (DO NOT ADD OR REMOVE FIELDS):
 
+def build_scene_generation_prompt(educational_script: str) -> str:
+    return f"""
+You are an expert AI Screenwriter and Director.
+I will provide you with an educational script. Your job is to convert it into a structured JSON format for video generation.
+
+INPUT SCRIPT:
+"{educational_script}"
+
+INSTRUCTIONS:
+1.  **Break Down**: Split the script into small, spoken-style scenes (1-3 sentences max per scene).
+    -   Each scene must be a logical "beat" of the story.
+    -   Do NOT cram too much text into one scene.
+2.  **Visuals**: For EACH scene, generate EXACTLY 3 DISTINCT image prompts.
+    -   These 3 prompts must describe completely different visuals that represent the SAME idea.
+    -   This gives us options to choose the best one later.
+
+STRICT JSON OUTPUT FORMAT:
 {{
-  "title": "{title}",
-  "description": "An educational psychology video explaining {title}.",
+  "title": "Derived Title",
+  "description": "Short description",
   "scenes": [
     {{
       "id": 1,
-      "text": "A spoken-style line that introduces or advances the idea.",
-      "image_prompt": "Abstract symbolic surreal visual of a single cartoon-style object placed against a simple cartoon background, calm dream-like atmosphere, minimalist composition.",
+      "text": "First chunk of narration...",
+      "image_prompts": [
+        "cartoonish image of a [Concept A]...",
+        "cartoonish image of a [Concept B]...",
+        "cartoonish image of a [Concept C]..."
+      ],
+      "audio_delay": 0.5,
       "emotion": "calm"
     }}
   ]
 }}
 
-GLOBAL VISUAL STYLE RULES (CRITICAL):
-- Visual Style: Abstract, symbolic, clean, surreal, CARTOONISH.
-- Rendering Style: Soft cartoon illustration, simplified shapes, smooth color fills.
-- Mood: Calm, introspective, slightly unsettling but safe.
-- Lighting: Soft cartoon lighting, gentle glow, no realistic lighting.
-- Composition: EXACTLY ONE main object and EXACTLY ONE background element.
-- Detail: Low-to-medium detail, flat or smooth gradients, no realism.
-- No faces, no realistic humans, no text inside images.
-- No additional objects, no clutter, no secondary elements.
-
-IMAGE PROMPT RULES:
-- Every image_prompt MUST start with:
-  "cartoonish image of..."
-- Use simple, everyday words only.
-- Write like a normal person, not like an artist or academic.
-- Example style:
-  "cartoonish image of a kite flying in a cloudy sky"
-- Length: 6–12 words only.
-- One main object and one background.
-- Do NOT use fancy words like: abstract, symbolic, surreal, cinematic, atmospheric.
-- No metaphors, no emotions, no artistic language.
-
+IMAGE PROMPT RULES (CRITICAL):
+-   **Quantity**: EXCEPTLY 3 prompts per scene.
+-   **Variety**: The 3 prompts must look DIFFERENT (e.g., one literal, one metaphorical, one abstract object).
+-   **Style**: "cartoonish image of..." (ALWAYS start with this).
+-   **Content**: Simple objects, clear composition, minimal detail. No complex scenes.
+-   **Constraints**: No text in images, no faces, clean cartoon style.
 
 SCENE RULES:
-- Each scene must include: id, text, image_prompt, emotion.
-- Scene IDs must be sequential starting from 1.
-- Text must be spoken-style narration (5–8 seconds per scene).
-- One idea per scene. No repetition.
-- Maintain logical flow from hook → explanation → insight → resolution.
+-   **Text**: Keep it spoken and natural.
+-   **Sequential**: ids must go 1, 2, 3...
+-   **Audio Delay**: explicit pause after this scene in seconds (0.5 to 2.0).
 
-ALLOWED EMOTIONS (ONLY THESE):
-["calm", "curious", "uneasy", "thoughtful", "hopeful", "resolved"]
-
-IMPORTANT:
-- This is NOT motivational hype.
-- This is NOT fast-paced content.
-- The tone must feel intelligent, confident, and restrained.
-
-FINAL REMINDER:
-OUTPUT ONLY VALID JSON.
-NO MARKDOWN.
-NO COMMENTS.
-NO EXTRA TEXT.
+OUTPUT ONLY THE VALID JSON OBJECT. NO MARKDOWN. NO EXTRA TEXT.
 """

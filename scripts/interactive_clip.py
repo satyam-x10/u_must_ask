@@ -10,7 +10,7 @@ import tkinter as tk
 from tkinter import ttk, Canvas, Frame, Scrollbar
 
 # Reuse caption logic from static clip script
-from scripts.clip import split_text_by_time, create_caption_image
+from scripts.clip import split_text_by_time, create_caption_image, create_collage
 
 # Keep existing helper functions
 def extract_layers(image_path):
@@ -46,6 +46,7 @@ def extract_layers(image_path):
     bg_pil = Image.fromarray(inpainted_rgb)
     
     return fg_pil, bg_pil, input_image
+
 
 def create_zooming_clip(pil_image_rgba, duration, max_zoom=1.05):
     """
@@ -85,6 +86,7 @@ def create_zooming_clip(pil_image_rgba, duration, max_zoom=1.05):
     rgb_clip = rgb_clip.set_mask(mask_clip)
     
     return rgb_clip
+
 
 def generate_single_clip_from_data(fg_pil, bg_pil, choice, audio_path, output_path, audio_text=""):
     """
@@ -226,7 +228,12 @@ def generate_single_clip_from_data(fg_pil, bg_pil, choice, audio_path, output_pa
         subtitles = split_text_by_time(audio_text, duration, max_chars=42)
         subtitle_clips = []
         for text, start, end in subtitles:
+            # Use 'create_caption_image' from text logic (which we imported)
+            # Assuming 'create_caption_image' draws text on transparent bg
+            # We need to make sure we imported it or logic is here
+            # We imported 'create_caption_image' at top.
             img = create_caption_image(text, video_width)
+            # Fix positioning using bottom alignment
             txt = (
                 ImageClip(img, transparent=True)
                 .set_position(("center", video_height - 100)) # Bottom
@@ -237,229 +244,377 @@ def generate_single_clip_from_data(fg_pil, bg_pil, choice, audio_path, output_pa
         
         # Add to composition
         if subtitle_clips:
-            # We must reform the CompositeVideoClip to include subtitles
-            # final_clip is already a CVC, we can grab its clips list
-            # But safer to just wrap it
             final_clip = CompositeVideoClip(final_clip.clips + subtitle_clips, size=(video_width, video_height))
 
-    final_clip = final_clip.set_audio(audio)
+    # final_clip = final_clip.set_audio(audio) # NO AUDIO
     
     # Write File
     final_clip.write_videofile(
-        output_path, fps=24, codec="libx264", audio_codec="aac", threads=4, logger=None
+        output_path, fps=24, codec="libx264", audio=False, threads=4, logger=None
     )
     return True
 
+# ==================================================================================
+# UI: IMAGE SELECTION APP
+# ==================================================================================
+
+class ImageSelectionApp:
+    def __init__(self, root, scenes_info):
+        self.root = root
+        self.root.title("Select Images for Scenes")
+        self.root.geometry("1400x900")
+        
+        self.scenes_info = scenes_info # List of {id, candidates: [path1, path2...]}
+        self.selections = {} # scene_id -> {path: BooleanVar}
+        self.thumbnails = [] # Refs
+
+        # Header
+        tk.Label(root, text="Select 1 Image for Cutout/Effect OR Multiple for Collage", font=("Arial", 16, "bold")).pack(pady=10)
+        
+        btn_confirm = tk.Button(root, text="CONFIRM SELECTIONS", font=("Arial", 14, "bold"), bg="#4CAF50", fg="white",
+                                command=self.on_confirm)
+        btn_confirm.pack(pady=10)
+
+        # Scrollable Area
+        container = Frame(root)
+        container.pack(fill="both", expand=True)
+        canvas = Canvas(container)
+        v_scroll = Scrollbar(container, orient="vertical", command=canvas.yview)
+        
+        scroll_frame = Frame(canvas)
+        scroll_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        canvas.create_window((0, 0), window=scroll_frame, anchor="nw")
+        canvas.configure(yscrollcommand=v_scroll.set)
+        
+        v_scroll.pack(side="right", fill="y")
+        canvas.pack(side="left", fill="both", expand=True)
+        
+        # Mousewheel
+        canvas.bind_all("<MouseWheel>", lambda e: canvas.yview_scroll(int(-1*(e.delta/120)), "units"))
+        
+        # Populate
+        thumb_h = 180
+        
+        for s_data in scenes_info:
+            sid = s_data['id']
+            paths = s_data['candidates']
+            text_preview = s_data.get('text', '')
+            
+            row = Frame(scroll_frame, bd=1, relief="solid", padx=10, pady=10)
+            row.pack(fill="x", padx=10, pady=5)
+            
+            # Header with Text
+            header_frame = Frame(row)
+            header_frame.pack(fill="x", pady=5)
+            tk.Label(header_frame, text=f"Scene {sid}", font=("Arial", 12, "bold"), fg="#2196F3").pack(side="left", padx=10)
+            tk.Label(header_frame, text=text_preview[:100]+"...", font=("Arial", 10, "italic"), fg="#555").pack(side="left")
+            
+            # Use StringVar for Single Selection
+            selected_var = tk.StringVar(value="") 
+            self.selections[sid] = selected_var
+            
+            # Default to first path if exists
+            if paths:
+                selected_var.set(paths[0])
+            
+            for p in paths:
+                # Load thumb
+                img = Image.open(p)
+                ratio = img.width / img.height
+                img_thumb = img.resize((int(thumb_h * ratio), thumb_h))
+                tk_thumb = ImageTk.PhotoImage(img_thumb)
+                self.thumbnails.append(tk_thumb)
+                
+                # Checkbox Frame -> Radio Frame
+                chk_frame = Frame(row)
+                chk_frame.pack(side="left", padx=15)
+                
+                # RadioButton
+                rb = tk.Radiobutton(chk_frame, image=tk_thumb, variable=selected_var, value=p)
+                rb.pack()
+                tk.Label(chk_frame, text=os.path.basename(p)).pack()
+
+    def on_confirm(self):
+        self.final_selections = {} # scene_id -> list of selected paths
+        
+        for sid, var in self.selections.items():
+            val = var.get()
+            if val:
+                self.final_selections[sid] = [val]
+            else:
+                 self.final_selections[sid] = []
+            
+        self.root.destroy()
+
 
 # ==================================================================================
-# BATCH UI CLASS
+# UI: BATCH VERIFICATION APP (EFFECTS)
 # ==================================================================================
 
 class BatchVerificationApp:
     def __init__(self, root, scene_data_list):
         self.root = root
-        self.root.title("Batch Effect Verification")
-        self.root.geometry("1400x900") # WIDER window
+        self.root.title("Select Effects for Single Images")
+        self.root.geometry("1400x900")
         
         self.scene_data_list = scene_data_list
-        self.choices = {} # scene_id -> StringVar
-        self.thumbnails = [] # Keep refs to prevent GC
-
-        # Header Frame
-        header_frame = Frame(root, padx=20, pady=10)
-        header_frame.pack(fill="x")
+        self.result_map = {} # scene_id -> choice_str
         
-        lbl_title = tk.Label(header_frame, text="Select Effects for All Scenes", font=("Arial", 16, "bold"))
-        lbl_title.pack(side="left")
+        # Header
+        tk.Label(root, text="Select Video Effect", font=("Arial", 16, "bold")).pack(pady=10)
         
-        btn_run = tk.Button(header_frame, text="GENERATE ALL VIDEOS", font=("Arial", 12, "bold"), 
-                            bg="#4CAF50", fg="white", padx=20, pady=5, 
+        btn_gen = tk.Button(root, text="GENERATE CLIPS", font=("Arial", 14, "bold"), bg="#2196F3", fg="white",
                             command=self.on_generate)
-        btn_run.pack(side="right")
-
-        # Container for Canvas + Scrollbars
+        btn_gen.pack(pady=10)
+        
+        # Scrollable Area
         container = Frame(root)
-        container.pack(fill="both", expand=True, padx=10, pady=10)
-
-        self.canvas = Canvas(container)
-        self.v_scroll = Scrollbar(container, orient="vertical", command=self.canvas.yview)
-        self.h_scroll = Scrollbar(container, orient="horizontal", command=self.canvas.xview)
+        container.pack(fill="both", expand=True)
+        canvas = Canvas(container)
+        v_scroll = Scrollbar(container, orient="vertical", command=canvas.yview)
         
-        self.scrollable_frame = Frame(self.canvas)
-
-        self.scrollable_frame.bind(
-            "<Configure>",
-            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-        )
-
-        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        scroll_frame = Frame(canvas)
+        scroll_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        canvas.create_window((0, 0), window=scroll_frame, anchor="nw")
+        canvas.configure(yscrollcommand=v_scroll.set)
         
-        self.canvas.configure(yscrollcommand=self.v_scroll.set, xscrollcommand=self.h_scroll.set)
-
-        self.v_scroll.pack(side="right", fill="y")
-        self.h_scroll.pack(side="bottom", fill="x")
-        self.canvas.pack(side="left", fill="both", expand=True)
-
-        # Populate Rows
-        for i, data in enumerate(scene_data_list):
-            self.create_row(i, data)
-
+        v_scroll.pack(side="right", fill="y")
+        canvas.pack(side="left", fill="both", expand=True)
         
-        # Mousewheel scroll vertical
-        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
-
-    def _on_mousewheel(self, event):
-        self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
-
-    def create_row(self, index, data):
-        row_frame = Frame(self.scrollable_frame, bd=2, relief="groove", padx=10, pady=10)
-        row_frame.pack(fill="x", padx=10, pady=5, anchor="w") # Anchor west
-
-        # 1. Info
-        info_frame = Frame(row_frame, width=100)
-        info_frame.pack(side="left", padx=10)
-        tk.Label(info_frame, text=f"Scene {data['id']}", font=("Arial", 12, "bold")).pack()
+        # Mousewheel
+        canvas.bind_all("<MouseWheel>", lambda e: canvas.yview_scroll(int(-1*(e.delta/120)), "units"))
         
-        # 2. Images (Original vs Cutout)
-        # Resize for thumbnail
-        thumb_h = 150
+        # Populate
+        self.choices = {} # scene_id -> StringVar
         
-        # Original
-        orig_pil = data['original_pil']
-        orig_ratio = orig_pil.width / orig_pil.height
-        orig_thumb = orig_pil.resize((int(thumb_h * orig_ratio), thumb_h))
-        orig_tk = ImageTk.PhotoImage(orig_thumb)
-        self.thumbnails.append(orig_tk) # Keep ref
-        
-        lbl_orig = tk.Label(row_frame, image=orig_tk)
-        lbl_orig.pack(side="left", padx=5)
-        
-        # Cutout (FG)
-        fg_pil = data['fg_pil']
-        fg_thumb = fg_pil.resize((int(thumb_h * orig_ratio), thumb_h))
-        
-        # Compose FG over checkerboard for visibility
-        bg_check = Image.new("RGB", fg_thumb.size, (200, 200, 200)) # Simple grey for UI
-        bg_check.paste(fg_thumb, (0, 0), fg_thumb)
-        
-        fg_tk = ImageTk.PhotoImage(bg_check)
-        self.thumbnails.append(fg_tk)
-        
-        lbl_fg = tk.Label(row_frame, image=fg_tk)
-        lbl_fg.pack(side="left", padx=5)
-        
-        # 3. Controls (Updated with 10 options)
-        ctrl_frame = Frame(row_frame)
-        ctrl_frame.pack(side="left", padx=30, fill="y")
-        
-        choice_var = tk.StringVar(value="0") # Default Skip (Static)
-        self.choices[data['id']] = choice_var
-        
-        tk.Label(ctrl_frame, text="Select Effect:", font=("Arial", 10, "bold")).pack(anchor="w")
-        
-        # Two columns of options
-        cols_frame = Frame(ctrl_frame)
-        cols_frame.pack(anchor="w")
-        
-        col1 = Frame(cols_frame)
-        col1.pack(side="left", padx=10, anchor="n")
-        col2 = Frame(cols_frame)
-        col2.pack(side="left", padx=10, anchor="n")
-
-        options = [
-            ("1. Zoom Subject", "1"),
-            ("2. Parallax", "2"),
-            ("3. Floating (Bob)", "3"),
-            ("4. Zoom BG", "4"),
-            ("5. Rotate", "5"),
-            ("6. BW to Color", "6"),
-            ("7. Flash Strobe", "7"),
-            ("8. Vignette Pulse", "8"),
-            ("9. Spotlight", "9"),
-            ("10. Tilt L/R", "10"),
-            ("11. Move L/R", "11"),
-            ("12. Fade In", "12"),
-            ("Skip (Static)", "0")
+        EFFECT_OPTIONS = [
+            ("0", "Skip (Static)"),
+            ("1", "Zoom Subject"),
+            ("2", "Parallax"),
+            ("3", "Floating"),
+            ("4", "Zoom BG"),
+            ("5", "Rotate"),
+            ("6", "BW Reveal"),
+            ("7", "Flash"),
+            ("8", "Vignette"),
+            ("9", "Spotlight"),
+            ("10", "Tilt L/R"),
+            ("11", "Move L/R"),
+            ("12", "Fade In")
         ]
         
-        for i, (text, val) in enumerate(options):
-            # Split after 5 items
-            parent = col1 if i < 5 else col2
-            tk.Radiobutton(parent, text=text, variable=choice_var, value=val, font=("Arial", 10)).pack(anchor="w")
+        for data in scene_data_list:
+            sid = data['id']
+            # PREVIEW GENERATION
+            # show Original vs Foreground to check cutout quality
+            orig_pil = data['original_pil']
+            fg_pil = data['fg_pil']
+            
+            thumb_h = 180
+            
+            # 1. Original Thumb
+            ratio_o = orig_pil.width / orig_pil.height
+            thumb_w_o = int(thumb_h * ratio_o)
+            orig_thumb = orig_pil.resize((thumb_w_o, thumb_h))
+            tk_orig = ImageTk.PhotoImage(orig_thumb)
+            
+            # 2. Cutout Thumb (FG)
+            # Create a checkerboard or dark bg for FG to see alpha
+            fg_thumb = fg_pil.resize((thumb_w_o, thumb_h))
+            # Composite on dark grey to see edges better
+            bg_check = Image.new("RGB", fg_thumb.size, (50, 50, 50))
+            bg_check.paste(fg_thumb, (0,0), fg_thumb)
+            tk_fg = ImageTk.PhotoImage(bg_check)
+            
+            # Keep refs
+            if not hasattr(self, 'thumbs'): self.thumbs = []
+            self.thumbs.extend([tk_orig, tk_fg])
+            
+            row = Frame(scroll_frame, bd=1, relief="solid", padx=10, pady=10)
+            row.pack(fill="x", padx=10, pady=5)
+            
+            # Images Container
+            imgs_frame = Frame(row)
+            imgs_frame.pack(side="left")
+            
+            # Show Original
+            lbl_orig = tk.Label(imgs_frame, text="Original", font=("Arial", 8))
+            lbl_orig.pack(anchor="w")
+            tk.Label(imgs_frame, image=tk_orig).pack(anchor="w")
+            
+            # Show Cutout
+            lbl_cut = tk.Label(imgs_frame, text="Cutout", font=("Arial", 8))
+            lbl_cut.pack(anchor="w", pady=(5,0))
+            tk.Label(imgs_frame, image=tk_fg).pack(anchor="w")
+            
+            # Controls
+            ctrl_frame = Frame(row)
+            ctrl_frame.pack(side="left", padx=20, fill="x", expand=True)
+            
+            tk.Label(ctrl_frame, text=f"Scene {sid}", font=("Arial", 14, "bold")).pack(anchor="w")
+            tk.Label(ctrl_frame, text=data['audio_text'][:60]+"...", fg="#666").pack(anchor="w")
+            
+            # Radio Buttons
+            choice_var = tk.StringVar(value="0") # Default Skip
+            self.choices[sid] = choice_var
+            
+            # Grid layout for options
+            opts_frame = Frame(ctrl_frame)
+            opts_frame.pack(anchor="w", pady=5)
+            
+            r = 0
+            c = 0
+            for val, label in EFFECT_OPTIONS:
+                rb = tk.Radiobutton(opts_frame, text=f"[{val}] {label}", variable=choice_var, value=val)
+                rb.grid(row=r, column=c, sticky="w", padx=5)
+                c += 1
+                if c > 4: # Wrap
+                    c = 0
+                    r += 1
 
     def on_generate(self):
-        # Gather choices
-        self.result_map = {}
+        # Collect results
         for sid, var in self.choices.items():
             self.result_map[sid] = var.get()
         self.root.destroy()
 
 
+# ==================================================================================
+# MAIN PROCESSOR
+# ==================================================================================
+
 def run_batch_processor(scenes_to_process):
     """
-    Main entry point for batch processing.
-    scenes_to_process: list of dicts {id, image_path, audio_path, output_path, audio_text}
+    1. Scan for multiple images.
+    2. Show Selection App.
+    3. If User selects > 1: Generate Collage Clip (Static).
+    4. If User selects 1: Generate Cutout (Extract) -> Show BatchVerificationApp (Effects).
     """
     
-    # 1. Pre-process (Extract Layers)
-    print("\n[BATCH] Starting Pre-processing (Extraction)... this may take a minute.")
-    prepared_data = []
+    # 1. SCAN IMAGES
+    print("\n[BATCH] Scanning for image candidates...")
+    scene_candidates = [] # List of {id, candidates: []}
+    
+    # Map back from scenes_to_process which has 'image_path' (usually just one)
+    # We want to find *all* for that scene_id
+    
+    base_images_dir = os.path.dirname(scenes_to_process[0]['image_path'])
+    # Note: scenes_to_process might have passed a path like .../scene_1.png (legacy) 
+    # or .../scene_1/img_1.png (new). We need the root images dir for the script.
+    
+    # If path ends with .png, dirname is the folder. 
+    # If it was scene_1/img_1.png, dirname is scene_1. Parent is images/script_id.
+    
+    # Robust way: We know the structure is images/{script_id}/
+    # Let's try to deduce the script_id dir.
+    
+    sample_path = scenes_to_process[0]['image_path']
+    if "scene_" in os.path.basename(os.path.dirname(sample_path)):
+         # We are in scenes/1/scene_1/img_1.png -> parent is script dir
+         script_images_dir = os.path.dirname(os.path.dirname(sample_path))
+    else:
+         # We are in scenes/1/scene_1.png -> dirname is script dir
+         script_images_dir = os.path.dirname(sample_path)
+
+    for scene in scenes_to_process:
+        sid = scene['id']
+        candidates = []
+        
+        # 1. Check NEW nested structure: scene_{sid}/img_{1..3}.png
+        scene_subfolder = os.path.join(script_images_dir, f"scene_{sid}")
+        if os.path.exists(scene_subfolder):
+            for i in range(1, 4):
+                p = os.path.join(scene_subfolder, f"img_{i}.png")
+                if os.path.exists(p):
+                    candidates.append(p)
+        
+        # 2. Fallback: Check flat structure scene_{sid}_{i}.png or scene_{sid}.png
+        if not candidates:
+            for i in range(1, 4):
+                p = os.path.join(script_images_dir, f"scene_{sid}_{i}.png")
+                if os.path.exists(p):
+                    candidates.append(p)
+                    
+        if not candidates:
+            # Last resort: flat scene_{sid}.png
+            p = os.path.join(script_images_dir, f"scene_{sid}.png")
+            if os.path.exists(p):
+                candidates.append(p)
+                
+                
+        if candidates:
+            # Pass 'text' for UI context
+            text_preview = scene.get('audio_text', '')
+            scene_candidates.append({"id": sid, "candidates": candidates, "text": text_preview})
+
+    # 2. SELECT IMAGES
+    print(f"[BATCH] Found candidates for {len(scene_candidates)} scenes. Launching Selection App...")
+    
+    root = tk.Tk()
+    sel_app = ImageSelectionApp(root, scene_candidates)
+    root.mainloop()
+    
+    if not hasattr(sel_app, 'final_selections'):
+        print("[BATCH] Selection cancelled.")
+        return
+
+    selected_map = sel_app.final_selections # {id: [path1, path2...]}
+    
+    # 3. PROCESS SELECTIONS
+    
+    scenes_for_effect_ui = [] # To be sent to BatchVerificationApp (Single image)
     
     for scene in scenes_to_process:
-        print(f"Processing Scene {scene['id']}...")
-        fg, bg, orig = extract_layers(scene['image_path'])
+        sid = scene['id']
+        selected_paths = selected_map.get(sid, [])
         
-        prepared_data.append({
-            "id": scene['id'],
+        if not selected_paths:
+            print(f"Skipping Scene {sid} (No images).")
+            continue
+            
+        scene_audio = scene['audio_path']
+        scene_out = scene['output_path']
+        scene_text = scene.get('audio_text', '')
+        
+        # ALWAYS SINGLE processing now
+        print(f"Scene {sid}: Image selected. preparing for Extraction...")
+        
+        # Use the selected path!
+        chosen_img_path = selected_paths[0]
+        
+        # Extract
+        fg, bg, orig = extract_layers(chosen_img_path)
+        
+        scenes_for_effect_ui.append({
+            "id": sid,
             "fg_pil": fg,
             "bg_pil": bg,
             "original_pil": orig,
-            "image_path": scene['image_path'],
-            "audio_path": scene['audio_path'],
-            "output_path": scene['output_path'],
-            "audio_text": scene.get('audio_text', '') # Pass text for subtitles
+            "image_path": chosen_img_path,
+            "audio_path": scene_audio,
+            "output_path": scene_out,
+            "audio_text": scene_text
         })
-        
-    print("[BATCH] Extraction complete. Launching UI...")
-    
-    # 2. Launch UI
-    root = tk.Tk()
-    app = BatchVerificationApp(root, prepared_data)
-    root.mainloop()
-    
-    # Get results from app (app.result_map)
-    if not hasattr(app, 'result_map'):
-        print("[BATCH] UI closed without generating.")
-        return
-        
-    choices = app.result_map
-    
-    # 3. Generate Videos
-    print("\n[BATCH] UI Completed. Starting Rendering...")
-    
-    for data in prepared_data:
-        sid = data['id']
-        choice = choices.get(sid, "0")
-        
-        print(f"Rendering Scene {sid} (Effect: {choice})...")
-        
-        if choice == "0":
-            print(f"  -> Skipping interactive effect (Static).")
-            continue
-            
-        success = generate_single_clip_from_data(
-            data['fg_pil'], 
-            data['bg_pil'], 
-            choice, 
-            data['audio_path'], 
-            data['output_path'],
-            data['audio_text']
-        )
-        
-        if success:
-             print(f"  -> Scene {sid} Generated Successfully.")
-        else:
-             print(f"  -> Scene {sid} generation skipped/failed.")
 
-    print("\n[BATCH] All rendering complete.")
-    return True
+    # 4. EFFECT UI (For Single Images)
+    if scenes_for_effect_ui:
+        print(f"\n[BATCH] Launching Effect Verification for {len(scenes_for_effect_ui)} scenes...")
+        root = tk.Tk()
+        app = BatchVerificationApp(root, scenes_for_effect_ui)
+        root.mainloop()
+        
+        if hasattr(app, 'result_map'):
+             choices = app.result_map
+             print("\n[BATCH] Rendering Effect Clips...")
+             for data in scenes_for_effect_ui:
+                 sid = data['id']
+                 choice = choices.get(sid, "0")
+                 
+                 success = generate_single_clip_from_data(
+                    data['fg_pil'], data['bg_pil'], choice, 
+                    data['audio_path'], data['output_path'], data['audio_text']
+                 )
+                 if success: print(f"  -> Scene {sid} Effect Clip Generated.")
+
+    print("\n[BATCH] All processing complete.")
+

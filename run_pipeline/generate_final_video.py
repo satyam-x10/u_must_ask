@@ -3,7 +3,7 @@ import re
 import numpy as np
 from moviepy.editor import (
     VideoFileClip, concatenate_videoclips,
-    CompositeVideoClip, ColorClip, ImageClip
+    CompositeVideoClip, ColorClip, ImageClip, AudioFileClip
 )
 from moviepy.video.fx.crop import crop
 
@@ -119,6 +119,22 @@ def generate_final_video(filepath_to_script: str):
         timeline.append(outro_clip)
 
     final = concatenate_videoclips(timeline, method="compose")
+
+    # ------------------------------------------------------------------------------------
+    # SET GLOBAL AUDIO (from full_audio.wav)
+    # ------------------------------------------------------------------------------------
+    audio_path = os.path.join(BASE, "audios", script_id, "full_audio.wav")
+    if os.path.exists(audio_path):
+        print(f"Merging Global Audio: {audio_path}")
+        global_audio = AudioFileClip(audio_path)
+        
+        # Safety: If audio is longer/shorter, we might want to trim or clamp?
+        # Usually set_audio just sets it. If audio is longer, it might keep playing?
+        # MoviePy write_videofile uses audio duration if it's longer than video? No, it uses video duration usually.
+        # But let's be safe.
+        final = final.set_audio(global_audio)
+    else:
+        print(f"WARNING: Global audio not found at {audio_path}. Video will be silent (or use clip audio).")
 
     # ------------------------------------------------------------------------------------
     # Export

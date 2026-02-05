@@ -3,7 +3,7 @@ import json
 import os
 from json_repair import repair_json
 from llm.generate_script import generate_script
-from scripts.prompt import build_script_prompt
+from scripts.prompt import build_educational_script_prompt, build_scene_generation_prompt
 
 OUTPUT_DIR = "outputs"
 MAX_RETRIES = 5
@@ -31,16 +31,33 @@ def extract_first_json_block(text: str) -> str:
 def generate_Script_Gemini(TITLE_NAME, TITLE_ID):
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    prompt = build_script_prompt(TITLE_NAME)
+    
+    # ---------------------------------------------------------
+    # STEP 1: Generate Educational Script (Text Only)
+    # ---------------------------------------------------------
+    print(f"\n[Step 1] Generating Educational Script for: {TITLE_NAME}...")
+    prompt_text = build_educational_script_prompt(TITLE_NAME)
+    educational_script_text = generate_script(prompt_text)
+    
+    if not educational_script_text or len(educational_script_text) < 100:
+         print("Error: Generated script text is too short.")
+         return None
 
+    print(f"[Step 1] Script generated ({len(educational_script_text)} chars). Proceeding to Scene generation...")
+
+    # ---------------------------------------------------------
+    # STEP 2: Convert to JSON Scenes (with Retry)
+    # ---------------------------------------------------------
+    prompt_json = build_scene_generation_prompt(educational_script_text)
+    
     script_data = None
     raw_output = ""
 
     for attempt in range(1, MAX_RETRIES + 1):
 
-        print(f"\nAttempt {attempt}/{MAX_RETRIES} for ID {TITLE_ID}")
+        print(f"\n[Step 2] Attempt {attempt}/{MAX_RETRIES} for JSON Conversion...")
 
-        raw_output = generate_script(prompt)
+        raw_output = generate_script(prompt_json)
 
         cleaned = re.sub(r"```(?:json)?|```", "", raw_output).strip()
 
@@ -64,8 +81,19 @@ def generate_Script_Gemini(TITLE_NAME, TITLE_ID):
             print("'scenes' missing. Retrying...")
             continue
 
-        if not isinstance(script_data["scenes"], list) or len(script_data["scenes"]) < 10:
-            print("Invalid scenes array. Retrying...")
+        if not isinstance(script_data["scenes"], list) or len(script_data["scenes"]) < 5:
+            print("Invalid scenes array (too short). Retrying...")
+            continue
+            
+        # Validate Image Prompts
+        valid_images = True
+        for scene in script_data["scenes"]:
+            if "image_prompts" not in scene or not isinstance(scene["image_prompts"], list) or len(scene["image_prompts"]) != 3:
+                 print(f"Invalid image_prompts in scene {scene.get('id')}. Must be list of 3.")
+                 valid_images = False
+                 break
+        
+        if not valid_images:
             continue
 
         print("Valid script generated.")

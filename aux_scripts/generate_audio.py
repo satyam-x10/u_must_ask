@@ -53,9 +53,37 @@ for idx, scene in enumerate(scenes, start=1):
 
         print(f"✅ Saved: {line_path}")
 
+
     except Exception as e:
         print(f"❌ Error on scene {idx}: {e}")
 
     time.sleep(0.1)
+
+# Generate Full Audio (Concatenated)
+print("\n🔗 Generating full audio file (concatenated)...")
+full_audio = AudioSegment.empty()
+
+# Iterate again to ensure correct order or just load them
+# Since we processed sequentially, we can just load them by filename
+for idx in range(1, len(scenes) + 1):
+    file_path = os.path.join(OUTPUT_DIR, f"scene_{idx:03d}.wav")
+    if os.path.exists(file_path):
+        segment = AudioSegment.from_wav(file_path)
+        full_audio += segment
+        
+        # Get delay from script scene data corresponding to this index
+        # index is 1-based, scenes listing is 0-based
+        if idx <= len(scenes):
+             current_scene = scenes[idx-1]
+             delay_sec = current_scene.get("audio_delay", 0.5)
+             delay_ms = int(delay_sec * 1000)
+             full_audio += AudioSegment.silent(duration=delay_ms)
+             
+    else:
+        print(f"⚠️ Warning: Missing audio for scene {idx}")
+
+full_audio_path = os.path.join(OUTPUT_DIR, "full_audio.wav")
+full_audio.export(full_audio_path, format="wav")
+print(f"✅ Full audio saved: {full_audio_path}")
 
 print(f"\n🎧 All audio clips saved in: {OUTPUT_DIR}")
