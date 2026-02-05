@@ -108,7 +108,7 @@ def generate_scene_clip(image_path: str, audio_path: str, output_path: str, audi
         img = create_caption_image(text, clip.w)
         txt = (
             ImageClip(img, transparent=True)
-            .set_position(("center", 10))
+            .set_position(("center", 980))
             .set_start(start)
             .set_end(end)
         )

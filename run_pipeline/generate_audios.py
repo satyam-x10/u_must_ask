@@ -35,7 +35,7 @@ def generate_audios(filepath: str) -> list:
     # ----------------------------------------
     # INTRO AUDIO
     # ----------------------------------------
-    intro_text = f"Welcome to the video. {title}."
+    intro_text = f"{title}"
     intro_path = os.path.join(audio_dir, "intro.wav")
 
     try:

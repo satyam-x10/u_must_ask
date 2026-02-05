@@ -129,17 +129,11 @@ def generate_single_clip_from_data(fg_pil, bg_pil, choice, audio_path, output_pa
         fg_clip = fg_clip_static.set_position(("center", "center"))
         final_clip = CompositeVideoClip([bg_clip, fg_clip], size=(video_width, video_height))
         
-    elif choice == "5": # Shake (Glitch)
-        # Slower Glitch/Shake
-        def make_shake(t):
-            import random
-            seed = int(t * 6) 
-            random.seed(seed)
-            x_off = random.randint(-15, 15)
-            y_off = random.randint(-15, 15)
-            return (video_width/2 - fg_clip_static.w/2 + x_off,
-                    video_height/2 - fg_clip_static.h/2 + y_off)
-        fg_clip = fg_clip_static.set_position(make_shake)
+    elif choice == "5": # Rotate (New)
+        # Continuous slow rotation (approx 15 deg/sec)
+        # We must re-center after rotation because dimensions change
+        rot_func = lambda t: -15 * t 
+        fg_clip = fg_clip_static.rotate(rot_func).set_position("center")
         final_clip = CompositeVideoClip([bg_clip, fg_clip], size=(video_width, video_height))
 
     elif choice == "6": # BW to Color Reveal
@@ -199,6 +193,27 @@ def generate_single_clip_from_data(fg_pil, bg_pil, choice, audio_path, output_pa
         bg_dark = bg_clip.fx(vfx.colorx, 0.3) # Darken BG
         # FG normal (popping out)
         final_clip = CompositeVideoClip([bg_dark, fg_clip_static], size=(video_width, video_height))
+
+    elif choice == "10": # Tilt Left/Right
+        # Rocking motion (+- 5 degrees)
+        rot_func = lambda t: 5 * np.sin(2.5 * t)
+        fg_clip = fg_clip_static.rotate(rot_func).set_position("center")
+        final_clip = CompositeVideoClip([bg_clip, fg_clip], size=(video_width, video_height))
+
+    elif choice == "11": # Left/Right Movement
+        # Slide back and forth
+        def move_lr(t):
+            offset = 40 * np.sin(2 * t)
+            return (video_width/2 - fg_clip_static.w/2 + offset,
+                    video_height/2 - fg_clip_static.h/2)
+        fg_clip = fg_clip_static.set_position(move_lr)
+        final_clip = CompositeVideoClip([bg_clip, fg_clip], size=(video_width, video_height))
+
+    elif choice == "12": # Invisible to Visible (Fade In)
+        # Fade in over 1.5 seconds (or full duration if short)
+        fade_dur = min(1.5, duration)
+        fg_clip = fg_clip_static.crossfadein(fade_dur)
+        final_clip = CompositeVideoClip([bg_clip, fg_clip], size=(video_width, video_height))
 
     # REMOVED Cinematic Bars (14)
 
@@ -337,7 +352,7 @@ class BatchVerificationApp:
         ctrl_frame = Frame(row_frame)
         ctrl_frame.pack(side="left", padx=30, fill="y")
         
-        choice_var = tk.StringVar(value="1") # Default Zoom
+        choice_var = tk.StringVar(value="0") # Default Skip (Static)
         self.choices[data['id']] = choice_var
         
         tk.Label(ctrl_frame, text="Select Effect:", font=("Arial", 10, "bold")).pack(anchor="w")
@@ -356,11 +371,14 @@ class BatchVerificationApp:
             ("2. Parallax", "2"),
             ("3. Floating (Bob)", "3"),
             ("4. Zoom BG", "4"),
-            ("5. Shake (Glitch)", "5"),
+            ("5. Rotate", "5"),
             ("6. BW to Color", "6"),
             ("7. Flash Strobe", "7"),
             ("8. Vignette Pulse", "8"),
             ("9. Spotlight", "9"),
+            ("10. Tilt L/R", "10"),
+            ("11. Move L/R", "11"),
+            ("12. Fade In", "12"),
             ("Skip (Static)", "0")
         ]
         
