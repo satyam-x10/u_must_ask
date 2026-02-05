@@ -83,7 +83,7 @@ def create_caption_image(text, width, fontsize=34, min_fontsize=34):
     return np.array(img)
 
 
-def generate_scene_clip(image_path: str, audio_path: str, output_path: str, audio_text: str):
+def generate_scene_clip(image_path: str, audio_path: str, output_path: str, audio_text: str, audio_delay: float = 0.5):
     audio = AudioFileClip(audio_path)
     duration = audio.duration
     
@@ -91,9 +91,12 @@ def generate_scene_clip(image_path: str, audio_path: str, output_path: str, audi
     fps = 24
     exact_duration = int(duration * fps) / fps
     audio = audio.subclip(0, exact_duration)
-    duration = exact_duration
+    
+    # Total video duration = audio + delay
+    # The image will show for the full duration (effectively freezing after audio ends)
+    video_duration = exact_duration + audio_delay
 
-    clip = ImageClip(image_path, duration=duration)
+    clip = ImageClip(image_path, duration=video_duration)
     clip = clip.resize(newsize=(1920, 1080))
 
     if random.random() < 0.30:

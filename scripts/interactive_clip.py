@@ -88,7 +88,9 @@ def create_zooming_clip(pil_image_rgba, duration, max_zoom=1.05):
     return rgb_clip
 
 
-def generate_single_clip_from_data(fg_pil, bg_pil, choice, audio_path, output_path, audio_text=""):
+from moviepy.editor import ImageClip, CompositeVideoClip, AudioFileClip, ColorClip, VideoClip, vfx, concatenate_videoclips
+
+def generate_single_clip_from_data(fg_pil, bg_pil, choice, audio_path, output_path, audio_text="", audio_delay: float = 0.5):
     """
     Generates a single clip based on pre-calculated assets and choice.
     """
@@ -247,6 +249,17 @@ def generate_single_clip_from_data(fg_pil, bg_pil, choice, audio_path, output_pa
             final_clip = CompositeVideoClip(final_clip.clips + subtitle_clips, size=(video_width, video_height))
 
     # final_clip = final_clip.set_audio(audio) # NO AUDIO
+    
+    # ---- ADD FREEZE FRAME (DELAY) ----
+    if audio_delay > 0 and final_clip is not None:
+        # Capture the very last frame of the effect clip
+        # We take a frame slightly before the end to avoid any out-of-bounds rounding
+        last_frame_img = final_clip.get_frame(duration - 0.05)
+        freeze_clip = ImageClip(last_frame_img, duration=audio_delay)
+        
+        # Concatenate: [Effect Clip] + [Freeze Clip]
+        from moviepy.editor import concatenate_videoclips
+        final_clip = concatenate_videoclips([final_clip, freeze_clip])
     
     # Write File
     final_clip.write_videofile(
@@ -575,6 +588,7 @@ def run_batch_processor(scenes_to_process):
         scene_audio = scene['audio_path']
         scene_out = scene['output_path']
         scene_text = scene.get('audio_text', '')
+        scene_delay = scene.get('audio_delay', 0.5)
         
         # ALWAYS SINGLE processing now
         print(f"Scene {sid}: Image selected. preparing for Extraction...")
@@ -593,7 +607,8 @@ def run_batch_processor(scenes_to_process):
             "image_path": chosen_img_path,
             "audio_path": scene_audio,
             "output_path": scene_out,
-            "audio_text": scene_text
+            "audio_text": scene_text,
+            "audio_delay": scene_delay
         })
 
     # 4. EFFECT UI (For Single Images)
@@ -612,7 +627,8 @@ def run_batch_processor(scenes_to_process):
                  
                  success = generate_single_clip_from_data(
                     data['fg_pil'], data['bg_pil'], choice, 
-                    data['audio_path'], data['output_path'], data['audio_text']
+                    data['audio_path'], data['output_path'], data['audio_text'],
+                    audio_delay=data['audio_delay']
                  )
                  if success: print(f"  -> Scene {sid} Effect Clip Generated.")
 

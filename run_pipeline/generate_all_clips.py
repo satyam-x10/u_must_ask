@@ -80,12 +80,15 @@ def generate_all_clips(filepath_to_script: str):
             print(f"Skipping scene {scene_id}: clip already exists")
             continue
             
+        audio_delay = scene.get("audio_delay", 0.5)
+
         scene_data = {
             "id": scene_id,
             "image_path": image_path,
             "audio_path": audio_path,
             "output_path": output_path,
-            "audio_text": scene.get("text", "")
+            "audio_text": scene.get("text", ""),
+            "audio_delay": audio_delay
         }
         batch_scenes.append(scene_data)
 
@@ -103,6 +106,7 @@ def generate_all_clips(filepath_to_script: str):
         audio_path = os.path.join(audios_dir, f"scene_{scene_id}.wav")
         output_path = os.path.join(clips_dir, f"scene_{scene_id}.mp4")
         audio_text = scene.get("text", "") # Getting text again
+        audio_delay = scene.get("audio_delay", 0.5)
 
         # Same checks
         # Same checks
@@ -117,7 +121,7 @@ def generate_all_clips(filepath_to_script: str):
         if os.path.exists(output_path): continue # If batch made it, we skip
 
         print(f"Generating STATIC clip for scene {scene_id} (Fallback)...")
-        generate_scene_clip(image_path, audio_path, output_path, audio_text)
+        generate_scene_clip(image_path, audio_path, output_path, audio_text, audio_delay=audio_delay)
 
     print("All clips generated successfully.")
 
@@ -162,7 +166,9 @@ def generate_all_clips(filepath_to_script: str):
             "end_time": round(end_time, 3)
         })
         
-        total_duration = end_time
+        # Add delay to the total timeline so the next clip starts after the delay
+        audio_delay = scene.get("audio_delay", 0.5)
+        total_duration = end_time + audio_delay
 
     audio_meta["total_duration_result"] = round(total_duration, 3)
     
